@@ -25,7 +25,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
   }
 
   const storage = getStorage();
-  const ref = { provider: article.file.storageProvider as 'local' | 'google_drive', key: article.file.storageKey };
+  const ref = { provider: article.file.storageProvider as 'local' | 'google_drive' | 'vercel_blob', key: article.file.storageKey };
   const size = await storage.getSize(ref);
 
   const rangeHeader = request.headers.get('range');

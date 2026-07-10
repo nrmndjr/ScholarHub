@@ -8,6 +8,9 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   adapter: PrismaAdapter(prisma),
   session: { strategy: 'jwt' },
   pages: { signIn: '/login' },
+  // Vercel terminates TLS at its edge and forwards over HTTP, so Auth.js
+  // can't verify the host itself; trust it since AUTH_URL pins the origin.
+  trustHost: true,
   providers: [
     Credentials({
       credentials: {

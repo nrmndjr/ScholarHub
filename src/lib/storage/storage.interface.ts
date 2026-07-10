@@ -1,5 +1,5 @@
 export interface StoredFileRef {
-  provider: 'local' | 'google_drive';
+  provider: 'local' | 'google_drive' | 'vercel_blob';
   key: string;
 }
 

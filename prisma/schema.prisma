@@ -7,11 +7,12 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
 }
 
-// Portability rules (SQLite dev -> Postgres prod, see plan doc):
-// - no Prisma `enum` (SQLite has none) -> plain String, validated with Zod at the boundary
+// Portability rules (kept even after the SQLite -> Postgres migration, so this
+// schema still works unmodified against either provider if ever needed again):
+// - no Prisma `enum` -> plain String, validated with Zod at the boundary
 // - no scalar list types (String[]) and no @db.* native types -> use Json instead
 // - ids are @default(cuid()), never dbgenerated()
 

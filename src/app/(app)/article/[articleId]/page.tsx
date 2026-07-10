@@ -46,7 +46,7 @@ export default async function ArticlePage({ params }: { params: Promise<{ articl
   let pageTexts: string[] = [];
   try {
     const storage = getStorage();
-    const ref = { provider: article.file.storageProvider as 'local' | 'google_drive', key: article.file.storageKey };
+    const ref = { provider: article.file.storageProvider as 'local' | 'google_drive' | 'vercel_blob', key: article.file.storageKey };
     const buffer = await streamToBuffer(await storage.getStream(ref));
     pageTexts = await extractAllPagesText(buffer);
   } catch {

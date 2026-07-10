@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server';
+import { NextResponse, after } from 'next/server';
 import { getCurrentUserOrThrow } from '@/lib/session';
 import { prisma } from '@/lib/prisma';
 import { getStorage } from '@/lib/storage/storage-factory';
@@ -30,8 +30,12 @@ export async function POST(request: Request) {
       { prisma, storage }
     );
 
-    processPendingJobs({ prisma, storage }).catch((error) => {
-      console.error('[upload] failed to kick off processing', error);
+    after(async () => {
+      try {
+        await processPendingJobs({ prisma, storage });
+      } catch (error) {
+        console.error('[upload] failed to kick off processing', error);
+      }
     });
 
     return NextResponse.json({ articleId: article.id }, { status: 201 });

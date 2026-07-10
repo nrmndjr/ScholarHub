@@ -42,7 +42,7 @@ async function runExtractMetadataJob(
     throw new Error('Article has no associated file');
   }
 
-  const ref = { provider: article.file.storageProvider as 'local' | 'google_drive', key: article.file.storageKey };
+  const ref = { provider: article.file.storageProvider as 'local' | 'google_drive' | 'vercel_blob', key: article.file.storageKey };
   const stream = await deps.storage.getStream(ref);
   const buffer = await streamToBuffer(stream);
 
