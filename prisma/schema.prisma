@@ -1,0 +1,385 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+// Portability rules (SQLite dev -> Postgres prod, see plan doc):
+// - no Prisma `enum` (SQLite has none) -> plain String, validated with Zod at the boundary
+// - no scalar list types (String[]) and no @db.* native types -> use Json instead
+// - ids are @default(cuid()), never dbgenerated()
+
+// ---------- Auth (NextAuth / Auth.js Prisma adapter) ----------
+
+model User {
+  id           String    @id @default(cuid())
+  name         String?
+  email        String    @unique
+  passwordHash String?
+  image        String?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  accounts        Account[]
+  sessions        Session[]
+  folders         Folder[]
+  tags            Tag[]
+  projects        Project[]
+  articles        Article[]
+  highlights      Highlight[]
+  comments        Comment[]
+  readingSessions ReadingSession[]
+  knowledgeNodes  KnowledgeMapNode[]
+  knowledgeEdges  KnowledgeMapEdge[]
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+// ---------- Organization (per-user) ----------
+
+model Folder {
+  id        String   @id @default(cuid())
+  userId    String
+  name      String
+  color     String?
+  parentId  String?
+  createdAt DateTime @default(now())
+
+  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  parent   Folder?   @relation("FolderChildren", fields: [parentId], references: [id])
+  children Folder[]  @relation("FolderChildren")
+  articles Article[]
+
+  @@index([userId])
+}
+
+model Tag {
+  id        String   @id @default(cuid())
+  userId    String
+  name      String
+  color     String?
+  createdAt DateTime @default(now())
+
+  user     User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  articles ArticleTag[]
+
+  @@unique([userId, name])
+}
+
+model Project {
+  id               String    @id @default(cuid())
+  userId           String
+  name             String
+  description      String?
+  objective        String?
+  researchQuestion String?
+  hypotheses       Json? // string[]
+  keywords         Json? // string[]
+  color            String?
+  startDate        DateTime?
+  endDate          DateTime?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  user     User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  articles ArticleProject[]
+
+  @@index([userId])
+}
+
+model ArticleProject {
+  articleId String
+  projectId String
+  addedAt   DateTime @default(now())
+
+  article Article @relation(fields: [articleId], references: [id], onDelete: Cascade)
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@id([articleId, projectId])
+}
+
+model ArticleTag {
+  articleId String
+  tagId     String
+
+  article Article @relation(fields: [articleId], references: [id], onDelete: Cascade)
+  tag     Tag     @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([articleId, tagId])
+}
+
+// ---------- Bibliographic entities ----------
+// Author/Journal are intentionally global (not userId-scoped) to dedupe across users.
+// Privacy is still enforced because every query into these tables is reached
+// through an Article, and Article always carries userId.
+
+model Author {
+  id             String   @id @default(cuid())
+  name           String
+  normalizedName String
+  orcid          String?
+  createdAt      DateTime @default(now())
+
+  articles ArticleAuthor[]
+
+  @@index([normalizedName])
+}
+
+model Journal {
+  id        String   @id @default(cuid())
+  name      String
+  issn      String?
+  publisher String?
+  createdAt DateTime @default(now())
+
+  articles Article[]
+}
+
+model ArticleAuthor {
+  articleId       String
+  authorId        String
+  position        Int // author order, used for citation formatting
+  isCorresponding Boolean @default(false)
+
+  article Article @relation(fields: [articleId], references: [id], onDelete: Cascade)
+  author  Author  @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+  @@id([articleId, authorId])
+}
+
+// ---------- Core: Article + File ----------
+
+model Article {
+  id     String  @id @default(cuid())
+  userId String
+  folderId  String?
+  journalId String?
+
+  title           String
+  subtitle        String?
+  abstractText    String?
+  year            Int?
+  publicationDate DateTime?
+  volume          String?
+  issue           String?
+  pages           String?
+  doi             String?
+  url             String?
+  language        String?
+  keywords        Json? // string[]
+
+  stage             String  @default("INBOX") // INBOX | LIBRARY
+  status            String  @default("NAO_INICIADO") // NAO_INICIADO | LENDO | CONCLUIDO | ABANDONADO
+  completenessScore Int     @default(0)
+  favorite          Boolean @default(false)
+
+  summaryContent   Json? // Tiptap JSON - "Resumo pessoal"
+  summaryUpdatedAt DateTime?
+
+  currentPage  Int       @default(1)
+  totalPages   Int?
+  lastOpenedAt DateTime?
+
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  archivedAt DateTime?
+
+  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  folder  Folder?  @relation(fields: [folderId], references: [id])
+  journal Journal? @relation(fields: [journalId], references: [id])
+
+  file              File?
+  authors           ArticleAuthor[]
+  tags              ArticleTag[]
+  projects          ArticleProject[]
+  highlights        Highlight[]
+  comments          Comment[]
+  readingSessions   ReadingSession[]
+  processingJobs    ProcessingJob[]
+  references        Reference[]       @relation("CitingArticle")
+  citedByReferences Reference[]       @relation("MatchedArticle")
+  knowledgeNode     KnowledgeMapNode?
+
+  @@index([userId, stage])
+  @@index([userId, status])
+}
+
+model File {
+  id               String   @id @default(cuid())
+  articleId        String   @unique
+  storageProvider  String   @default("local") // local | google_drive
+  storageKey       String
+  originalFilename String
+  mimeType         String
+  sizeBytes        Int
+  checksumSha256   String?
+  createdAt        DateTime @default(now())
+
+  article Article @relation(fields: [articleId], references: [id], onDelete: Cascade)
+}
+
+// ---------- Background processing (DB-backed queue, no Redis/Docker needed) ----------
+
+model ProcessingJob {
+  id         String    @id @default(cuid())
+  articleId  String
+  type       String // EXTRACT_METADATA | CROSSREF_LOOKUP
+  status     String    @default("PENDING") // PENDING | RUNNING | SUCCEEDED | FAILED
+  attempts   Int       @default(0)
+  lastError  String?
+  payload    Json?
+  result     Json?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  startedAt  DateTime?
+  finishedAt DateTime?
+
+  article Article @relation(fields: [articleId], references: [id], onDelete: Cascade)
+
+  @@index([status, createdAt])
+}
+
+// ---------- Highlights & Comments ----------
+
+model Highlight {
+  id           String   @id @default(cuid())
+  userId       String
+  articleId    String
+  color        String // CONCEITO_IMPORTANTE | METODOLOGIA | CITACAO | RESULTADO | CRITICA | COMENTARIO
+  page         Int
+  excerptText  String
+  positionData Json // { pageNumber, boundingRect, rects[] } normalized 0..1
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  user    User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  article Article   @relation(fields: [articleId], references: [id], onDelete: Cascade)
+  comments Comment[]
+
+  @@index([articleId, color])
+}
+
+model Comment {
+  id          String   @id @default(cuid())
+  userId      String
+  articleId   String
+  highlightId String? // null = general article comment, set = highlight-anchored
+  body        Json // Tiptap JSON
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  article   Article    @relation(fields: [articleId], references: [id], onDelete: Cascade)
+  highlight Highlight? @relation(fields: [highlightId], references: [id], onDelete: Cascade)
+
+  @@index([articleId])
+}
+
+// ---------- Reading analytics (write-path now, dashboard UI is Phase 2) ----------
+
+model ReadingSession {
+  id              String    @id @default(cuid())
+  userId          String
+  articleId       String
+  startedAt       DateTime  @default(now())
+  endedAt         DateTime?
+  durationSeconds Int?
+  startPage       Int?
+  endPage         Int?
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  article Article @relation(fields: [articleId], references: [id], onDelete: Cascade)
+
+  @@index([userId, articleId])
+}
+
+// ---------- Citations extracted from the article body (schema-only in Phase 1) ----------
+
+model Reference {
+  id               String   @id @default(cuid())
+  citingArticleId  String
+  rawText          String
+  parsedTitle      String?
+  parsedAuthors    Json?
+  parsedYear       Int?
+  doi              String?
+  matchedArticleId String?
+  createdAt        DateTime @default(now())
+
+  citingArticle  Article  @relation("CitingArticle", fields: [citingArticleId], references: [id], onDelete: Cascade)
+  matchedArticle Article? @relation("MatchedArticle", fields: [matchedArticleId], references: [id])
+}
+
+// ---------- Knowledge Map (schema-only in Phase 1; graph UI is Phase 2) ----------
+
+model KnowledgeMapNode {
+  id        String   @id @default(cuid())
+  userId    String
+  articleId String   @unique
+  x         Float?
+  y         Float?
+  createdAt DateTime @default(now())
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  article Article @relation(fields: [articleId], references: [id], onDelete: Cascade)
+
+  outgoing KnowledgeMapEdge[] @relation("SourceNode")
+  incoming KnowledgeMapEdge[] @relation("TargetNode")
+}
+
+model KnowledgeMapEdge {
+  id             String   @id @default(cuid())
+  userId         String
+  sourceNodeId   String
+  targetNodeId   String
+  connectionType String // COMPLEMENTA | CONTRADIZ | APROFUNDA | BASE_TEORICA | METODOLOGIA_SEMELHANTE | MESMO_ESTUDO_DE_CASO
+  origin         String   @default("MANUAL") // MANUAL | AUTO
+  note           String?
+  createdAt      DateTime @default(now())
+
+  user   User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  source KnowledgeMapNode @relation("SourceNode", fields: [sourceNodeId], references: [id], onDelete: Cascade)
+  target KnowledgeMapNode @relation("TargetNode", fields: [targetNodeId], references: [id], onDelete: Cascade)
+
+  @@unique([sourceNodeId, targetNodeId, connectionType])
+}
