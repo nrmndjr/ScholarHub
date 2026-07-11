@@ -30,10 +30,15 @@ export default async function DashboardPage() {
       </div>
 
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
-        <StatCard label="Na Inbox" value={String(data.counts.inbox)} icon={Inbox} />
-        <StatCard label="Na Biblioteca" value={String(data.counts.library)} icon={Library} />
-        <StatCard label="Lendo agora" value={String(data.counts.reading)} icon={BookOpen} />
-        <StatCard label="Concluídos" value={String(data.counts.completed)} icon={CheckCircle2} />
+        <StatCard label="Na Inbox" value={String(data.counts.inbox)} icon={Inbox} href="/inbox" />
+        <StatCard label="Na Biblioteca" value={String(data.counts.library)} icon={Library} href="/library" />
+        <StatCard label="Lendo agora" value={String(data.counts.reading)} icon={BookOpen} href="/library?status=LENDO" />
+        <StatCard
+          label="Concluídos"
+          value={String(data.counts.completed)}
+          icon={CheckCircle2}
+          href="/library?status=CONCLUIDO"
+        />
         <StatCard label="Tempo de leitura" value={formatReadingTime(data.totalReadingSeconds)} icon={Clock} />
       </div>
 

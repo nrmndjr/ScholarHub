@@ -1,7 +1,9 @@
 'use client';
 
 import { useEffect, useState, useTransition } from 'react';
+import Link from 'next/link';
 import { BookOpen } from 'lucide-react';
+import { Button } from '@/components/ui/Button';
 import { FilterBar, type KnowledgeBaseFilterOptions } from './FilterBar';
 import { TagSidebar } from './TagSidebar';
 import { HighlightResultCard } from './HighlightResultCard';
@@ -62,9 +64,25 @@ export function KnowledgeBaseWorkspace({
           </p>
 
           {results.length === 0 ? (
-            <div className="flex flex-col items-center justify-center gap-2 py-20 text-center">
+            <div className="flex flex-col items-center justify-center gap-3 py-20 text-center">
               <BookOpen className="h-8 w-8 text-neutral-300 dark:text-neutral-700" />
-              <p className="text-sm text-neutral-400">Nenhum destaque encontrado com esses filtros.</p>
+              {Object.values(filters).some((v) => v !== undefined && v !== '') ? (
+                <>
+                  <p className="text-sm text-neutral-400">Nenhum destaque encontrado com esses filtros.</p>
+                  <Button size="sm" variant="secondary" onClick={() => setFilters({})}>
+                    Limpar filtros
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <p className="text-sm text-neutral-400">
+                    Nenhum destaque ainda. Abra um artigo na Biblioteca e comece a marcar trechos.
+                  </p>
+                  <Link href="/library">
+                    <Button size="sm">Ir para Biblioteca</Button>
+                  </Link>
+                </>
+              )}
             </div>
           ) : (
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">

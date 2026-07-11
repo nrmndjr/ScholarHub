@@ -1,12 +1,14 @@
 import { getCurrentUserOrThrow } from '@/lib/session';
 import { prisma } from '@/lib/prisma';
 import { listLibraryArticles, listLibraryFilterOptions, type LibrarySort } from '@/modules/articles/use-cases/list-library-articles';
+import Link from 'next/link';
 import { LibraryToolbar } from './_components/LibraryToolbar';
 import { LibraryCardView } from './_components/LibraryCardView';
 import { LibraryListView } from './_components/LibraryListView';
 import { LibraryTableView } from './_components/LibraryTableView';
 import type { LibraryArticleItem } from './_components/types';
 import { Library } from 'lucide-react';
+import { Button } from '@/components/ui/Button';
 
 function formatReadingTime(totalSeconds: number) {
   if (totalSeconds <= 0) return '—';
@@ -37,6 +39,8 @@ export default async function LibraryPage({
     year: typeof params.year === 'string' && params.year ? Number(params.year) : undefined,
     favoritesOnly: params.favorites === '1',
   };
+
+  const hasActiveFilters = Object.values(filters).some((v) => v !== undefined && v !== false);
 
   const [articles, filterOptions] = await Promise.all([
     listLibraryArticles({ userId: user.id, filters, sort }, { prisma }),
@@ -77,11 +81,24 @@ export default async function LibraryPage({
       <LibraryToolbar options={filterOptions} />
 
       {items.length === 0 ? (
-        <div className="flex flex-col items-center justify-center gap-2 py-16 text-center">
+        <div className="flex flex-col items-center justify-center gap-3 py-16 text-center">
           <Library className="h-8 w-8 text-neutral-300 dark:text-neutral-700" />
           <p className="text-sm text-neutral-500 dark:text-neutral-400">
-            Nenhum artigo encontrado. Arquive artigos a partir da Inbox ou ajuste os filtros.
+            {hasActiveFilters
+              ? 'Nenhum artigo encontrado com esses filtros.'
+              : 'Sua biblioteca está vazia. Envie PDFs na Inbox e arquive-os aqui.'}
           </p>
+          {hasActiveFilters ? (
+            <Link href="/library">
+              <Button size="sm" variant="secondary">
+                Limpar filtros
+              </Button>
+            </Link>
+          ) : (
+            <Link href="/inbox">
+              <Button size="sm">Ir para Inbox</Button>
+            </Link>
+          )}
         </div>
       ) : view === 'list' ? (
         <LibraryListView items={items} />

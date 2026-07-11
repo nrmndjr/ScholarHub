@@ -52,11 +52,15 @@ export function WritingDocumentsGrid({
       </div>
 
       {documents.length === 0 ? (
-        <div className="flex flex-col items-center justify-center gap-2 py-16 text-center">
+        <div className="flex flex-col items-center justify-center gap-3 py-16 text-center">
           <PenLine className="h-8 w-8 text-neutral-300 dark:text-neutral-700" />
           <p className="text-sm text-neutral-500 dark:text-neutral-400">
             Nenhum documento ainda. Crie um workspace para começar a organizar sua escrita.
           </p>
+          <Button size="sm" onClick={() => setCreateOpen(true)}>
+            <Plus className="h-4 w-4" />
+            Novo documento
+          </Button>
         </div>
       ) : (
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">

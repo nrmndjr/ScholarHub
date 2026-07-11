@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import dynamic from 'next/dynamic';
+import Link from 'next/link';
 import { Network } from 'lucide-react';
 import {
   KNOWLEDGE_NODE_TYPES,
@@ -10,6 +11,7 @@ import {
   type KnowledgeNodeType,
 } from '@/modules/knowledge-map/domain/entities';
 import { NodeDetailPanel } from './NodeDetailPanel';
+import { Button } from '@/components/ui/Button';
 import { cn } from '@/lib/utils';
 
 const KnowledgeGraph = dynamic(() => import('./KnowledgeGraph').then((m) => m.KnowledgeGraph), {
@@ -63,6 +65,9 @@ export function KnowledgeMapWorkspace({ graph }: { graph: KnowledgeGraphData }) 
           Arquive artigos na Biblioteca para começar a ver as conexões entre autores, projetos, tags, periódicos e
           palavras-chave.
         </p>
+        <Link href="/library">
+          <Button size="sm">Ir para Biblioteca</Button>
+        </Link>
       </div>
     );
   }

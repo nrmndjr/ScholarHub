@@ -155,9 +155,15 @@ export function PdfViewer({
   useEffect(() => {
     function handleKeydown(e: KeyboardEvent) {
       const target = e.target as HTMLElement;
-      if (['INPUT', 'TEXTAREA'].includes(target.tagName)) return;
-      if (e.key === 'ArrowRight') goToPage(currentPage + 1);
-      if (e.key === 'ArrowLeft') goToPage(currentPage - 1);
+      // Ignore while typing anywhere editable — plain inputs/textareas (search, page
+      // number) and rich-text editors like the Resumo/Comentários fields, which are
+      // contentEditable divs, not <textarea>, so arrow keys there must move the cursor,
+      // not the PDF page.
+      if (['INPUT', 'TEXTAREA'].includes(target.tagName) || target.isContentEditable) return;
+      if (e.key === 'ArrowRight' || e.key === 'PageDown') goToPage(currentPage + 1);
+      if (e.key === 'ArrowLeft' || e.key === 'PageUp') goToPage(currentPage - 1);
+      if (e.key === 'Home') goToPage(1);
+      if (e.key === 'End' && numPages) goToPage(numPages);
     }
     window.addEventListener('keydown', handleKeydown);
     return () => window.removeEventListener('keydown', handleKeydown);
@@ -189,6 +195,7 @@ export function PdfViewer({
             onClick={() => goToPage(currentPage - 1)}
             className="rounded-md p-1.5 text-neutral-500 hover:bg-neutral-100 disabled:opacity-30 dark:hover:bg-neutral-800"
             disabled={currentPage <= 1}
+            title="Página anterior (←)"
           >
             <ChevronLeft className="h-4 w-4" />
           </button>
@@ -210,6 +217,7 @@ export function PdfViewer({
             onClick={() => goToPage(currentPage + 1)}
             className="rounded-md p-1.5 text-neutral-500 hover:bg-neutral-100 disabled:opacity-30 dark:hover:bg-neutral-800"
             disabled={!numPages || currentPage >= numPages}
+            title="Próxima página (→)"
           >
             <ChevronRight className="h-4 w-4" />
           </button>

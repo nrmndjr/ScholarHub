@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { BookOpen } from 'lucide-react';
 import { Card } from '@/components/ui/Card';
+import { Button } from '@/components/ui/Button';
 
 export function ContinueReading({
   items,
@@ -15,6 +16,11 @@ export function ContinueReading({
         <div className="flex flex-col items-center gap-2 py-6 text-center">
           <BookOpen className="h-6 w-6 text-neutral-300 dark:text-neutral-700" />
           <p className="text-xs text-neutral-400">Nenhum artigo aberto ainda.</p>
+          <Link href="/library">
+            <Button size="sm" variant="secondary">
+              Ir para Biblioteca
+            </Button>
+          </Link>
         </div>
       ) : (
         <ul className="space-y-3">

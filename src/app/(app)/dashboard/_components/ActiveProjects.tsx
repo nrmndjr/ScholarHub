@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { FolderKanban } from 'lucide-react';
 import { Card } from '@/components/ui/Card';
+import { Button } from '@/components/ui/Button';
 
 export function ActiveProjects({
   projects,
@@ -15,6 +16,11 @@ export function ActiveProjects({
         <div className="flex flex-col items-center gap-2 py-6 text-center">
           <FolderKanban className="h-6 w-6 text-neutral-300 dark:text-neutral-700" />
           <p className="text-xs text-neutral-400">Nenhum projeto criado ainda.</p>
+          <Link href="/projects">
+            <Button size="sm" variant="secondary">
+              Criar projeto
+            </Button>
+          </Link>
         </div>
       ) : (
         <ul className="space-y-2.5">
