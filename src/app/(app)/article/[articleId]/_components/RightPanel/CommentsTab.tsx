@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/Button';
 import { Textarea } from '@/components/ui/Textarea';
 import { HIGHLIGHT_COLOR_META, type HighlightColor } from '@/modules/highlights/domain/entities';
 import { createCommentAction, deleteCommentAction } from '../../actions';
-import { plainTextToTiptapDoc, tiptapToPlainText } from '../tiptap-plain-text';
+import { plainTextToTiptapDoc, tiptapToPlainText } from '@/modules/comments/domain/tiptap-plain-text';
 import type { CommentItem } from '../types';
 
 type FilterValue = 'ALL' | 'GERAL' | HighlightColor;

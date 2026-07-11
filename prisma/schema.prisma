@@ -19,25 +19,27 @@ datasource db {
 // ---------- Auth (NextAuth / Auth.js Prisma adapter) ----------
 
 model User {
-  id           String    @id @default(cuid())
+  id           String   @id @default(cuid())
   name         String?
-  email        String    @unique
+  email        String   @unique
   passwordHash String?
   image        String?
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
-  accounts        Account[]
-  sessions        Session[]
-  folders         Folder[]
-  tags            Tag[]
-  projects        Project[]
-  articles        Article[]
-  highlights      Highlight[]
-  comments        Comment[]
-  readingSessions ReadingSession[]
-  knowledgeNodes  KnowledgeMapNode[]
-  knowledgeEdges  KnowledgeMapEdge[]
+  accounts         Account[]
+  sessions         Session[]
+  folders          Folder[]
+  tags             Tag[]
+  projects         Project[]
+  articles         Article[]
+  highlights       Highlight[]
+  comments         Comment[]
+  readingSessions  ReadingSession[]
+  knowledgeNodes   KnowledgeMapNode[]
+  knowledgeEdges   KnowledgeMapEdge[]
+  writingDocuments WritingDocument[]
+  writingBlocks    WritingBlock[]
 }
 
 model Account {
@@ -122,8 +124,9 @@ model Project {
   createdAt        DateTime  @default(now())
   updatedAt        DateTime  @updatedAt
 
-  user     User             @relation(fields: [userId], references: [id], onDelete: Cascade)
-  articles ArticleProject[]
+  user             User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  articles         ArticleProject[]
+  writingDocuments WritingDocument[]
 
   @@index([userId])
 }
@@ -191,8 +194,8 @@ model ArticleAuthor {
 // ---------- Core: Article + File ----------
 
 model Article {
-  id     String  @id @default(cuid())
-  userId String
+  id        String  @id @default(cuid())
+  userId    String
   folderId  String?
   journalId String?
 
@@ -240,6 +243,7 @@ model Article {
   references        Reference[]       @relation("CitingArticle")
   citedByReferences Reference[]       @relation("MatchedArticle")
   knowledgeNode     KnowledgeMapNode?
+  writingBlocks     WritingBlock[]
 
   @@index([userId, stage])
   @@index([userId, status])
@@ -293,9 +297,10 @@ model Highlight {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
-  user    User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  article Article   @relation(fields: [articleId], references: [id], onDelete: Cascade)
-  comments Comment[]
+  user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  article       Article        @relation(fields: [articleId], references: [id], onDelete: Cascade)
+  comments      Comment[]
+  writingBlocks WritingBlock[]
 
   @@index([articleId, color])
 }
@@ -309,9 +314,10 @@ model Comment {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
-  article   Article    @relation(fields: [articleId], references: [id], onDelete: Cascade)
-  highlight Highlight? @relation(fields: [highlightId], references: [id], onDelete: Cascade)
+  user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  article       Article        @relation(fields: [articleId], references: [id], onDelete: Cascade)
+  highlight     Highlight?     @relation(fields: [highlightId], references: [id], onDelete: Cascade)
+  writingBlocks WritingBlock[]
 
   @@index([articleId])
 }
@@ -383,4 +389,42 @@ model KnowledgeMapEdge {
   target KnowledgeMapNode @relation("TargetNode", fields: [targetNodeId], references: [id], onDelete: Cascade)
 
   @@unique([sourceNodeId, targetNodeId, connectionType])
+}
+
+// ---------- Painel de Escrita (writing workspace) ----------
+
+model WritingDocument {
+  id        String   @id @default(cuid())
+  userId    String
+  title     String
+  projectId String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user    User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  project Project?       @relation(fields: [projectId], references: [id])
+  blocks  WritingBlock[]
+
+  @@index([userId])
+}
+
+model WritingBlock {
+  id          String   @id @default(cuid())
+  documentId  String
+  userId      String
+  order       Int
+  blockType   String // TEXT | HIGHLIGHT_REF | COMMENT_REF | SUMMARY_REF | CITATION_REF
+  textContent String? // plain text, only for TEXT blocks
+  articleId   String? // source article, for *_REF blocks
+  highlightId String? // for HIGHLIGHT_REF blocks
+  commentId   String? // for COMMENT_REF blocks
+  createdAt   DateTime @default(now())
+
+  document  WritingDocument @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  user      User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  article   Article?        @relation(fields: [articleId], references: [id], onDelete: Cascade)
+  highlight Highlight?      @relation(fields: [highlightId], references: [id], onDelete: Cascade)
+  comment   Comment?        @relation(fields: [commentId], references: [id], onDelete: Cascade)
+
+  @@index([documentId, order])
 }

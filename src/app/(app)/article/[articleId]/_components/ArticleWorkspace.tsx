@@ -7,7 +7,7 @@ import { toast } from 'sonner';
 import { RightPanelTabs } from './RightPanel/RightPanelTabs';
 import { CommentComposerDialog } from './CommentComposerDialog';
 import { createHighlightAction, createCommentAction, updateProgressAction, closeSessionAction } from '../actions';
-import { plainTextToTiptapDoc } from './tiptap-plain-text';
+import { plainTextToTiptapDoc } from '@/modules/comments/domain/tiptap-plain-text';
 import type { ArticleData, HighlightItem, CommentItem } from './types';
 import type { HighlightColor, HighlightPositionData } from '@/modules/highlights/domain/entities';
 

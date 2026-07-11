@@ -5,7 +5,7 @@ import { Copy, Trash2, ChevronRight } from 'lucide-react';
 import { toast } from 'sonner';
 import { HIGHLIGHT_COLORS, HIGHLIGHT_COLOR_META, type HighlightColor } from '@/modules/highlights/domain/entities';
 import { deleteHighlightAction } from '../../actions';
-import { tiptapToPlainText } from '../tiptap-plain-text';
+import { tiptapToPlainText } from '@/modules/comments/domain/tiptap-plain-text';
 import type { HighlightItem } from '../types';
 
 export function HighlightsTab({

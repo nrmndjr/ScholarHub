@@ -15,8 +15,15 @@ async function streamToBuffer(stream: NodeJS.ReadableStream): Promise<Buffer> {
   return Buffer.concat(chunks);
 }
 
-export default async function ArticlePage({ params }: { params: Promise<{ articleId: string }> }) {
+export default async function ArticlePage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ articleId: string }>;
+  searchParams: Promise<{ page?: string }>;
+}) {
   const { articleId } = await params;
+  const { page: pageParam } = await searchParams;
   const user = await getCurrentUserOrThrow();
 
   const article = await prisma.article.findFirst({
@@ -64,7 +71,7 @@ export default async function ArticlePage({ params }: { params: Promise<{ articl
     pages: article.pages,
     doi: article.doi,
     url: article.url,
-    currentPage: article.currentPage,
+    currentPage: pageParam ? Number(pageParam) || article.currentPage : article.currentPage,
     totalPages: article.totalPages,
     summaryContent: article.summaryContent,
     fileUrl: `/api/articles/${article.id}/file`,
