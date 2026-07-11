@@ -1,12 +1,11 @@
-import { Network } from 'lucide-react';
-import { ComingSoon } from '@/components/ui/ComingSoon';
+import { getCurrentUserOrThrow } from '@/lib/session';
+import { prisma } from '@/lib/prisma';
+import { getKnowledgeGraph } from '@/modules/knowledge-map/use-cases/get-knowledge-graph';
+import { KnowledgeMapWorkspace } from './_components/KnowledgeMapWorkspace';
 
-export default function KnowledgeMapPage() {
-  return (
-    <ComingSoon
-      icon={Network}
-      title="Mapa do Conhecimento"
-      description="A visualização em grafo conectando artigos, autores, projetos, tags e periódicos chega na próxima fase do ScholarHub."
-    />
-  );
+export default async function KnowledgeMapPage() {
+  const user = await getCurrentUserOrThrow();
+  const graph = await getKnowledgeGraph(user.id, { prisma });
+
+  return <KnowledgeMapWorkspace graph={graph} />;
 }
