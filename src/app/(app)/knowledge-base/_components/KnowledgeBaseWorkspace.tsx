@@ -7,20 +7,25 @@ import { Button } from '@/components/ui/Button';
 import { FilterBar, type KnowledgeBaseFilterOptions } from './FilterBar';
 import { TagSidebar } from './TagSidebar';
 import { HighlightResultCard } from './HighlightResultCard';
+import { SavedFiltersBar } from './SavedFiltersBar';
 import { searchHighlightsAction } from '../actions';
 import type { HighlightSearchFilters, KnowledgeHighlightCard, TagWithCount } from '@/modules/knowledge-base/domain/entities';
+import type { SavedFilterData } from '@/modules/knowledge-base/use-cases/manage-saved-filters';
 
 export function KnowledgeBaseWorkspace({
   initialHighlights,
   tags,
   filterOptions,
+  initialSavedFilters,
 }: {
   initialHighlights: KnowledgeHighlightCard[];
   tags: TagWithCount[];
   filterOptions: KnowledgeBaseFilterOptions & { tags: { id: string; name: string }[] };
+  initialSavedFilters: SavedFilterData[];
 }) {
   const [filters, setFilters] = useState<HighlightSearchFilters>({});
   const [results, setResults] = useState(initialHighlights);
+  const [savedFilters, setSavedFilters] = useState(initialSavedFilters);
   const [isPending, startTransition] = useTransition();
 
   useEffect(() => {
@@ -50,6 +55,14 @@ export function KnowledgeBaseWorkspace({
         </p>
         <div className="mt-3">
           <FilterBar filters={filters} onChange={setFilters} options={filterOptions} />
+        </div>
+        <div className="mt-2">
+          <SavedFiltersBar
+            savedFilters={savedFilters}
+            onSavedFiltersChange={setSavedFilters}
+            currentFilters={filters}
+            onApply={setFilters}
+          />
         </div>
       </div>
 

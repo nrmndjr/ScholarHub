@@ -1,6 +1,7 @@
 'use client';
 
-import { Search } from 'lucide-react';
+import { useState } from 'react';
+import { Search, SlidersHorizontal } from 'lucide-react';
 import { ARTICLE_STATUSES, ARTICLE_STATUS_LABELS } from '@/modules/articles/domain/entities';
 import { HIGHLIGHT_COLORS, HIGHLIGHT_COLOR_META } from '@/modules/highlights/domain/entities';
 import type { HighlightSearchFilters } from '@/modules/knowledge-base/domain/entities';
@@ -28,6 +29,15 @@ export function FilterBar({
   function set<K extends keyof HighlightSearchFilters>(key: K, value: HighlightSearchFilters[K]) {
     onChange({ ...filters, [key]: value || undefined });
   }
+
+  const hasMoreFiltersActive =
+    filters.articleStatus !== undefined ||
+    filters.yearFrom !== undefined ||
+    filters.yearTo !== undefined ||
+    !!filters.dateFrom ||
+    !!filters.dateTo;
+  const [showMore, setShowMore] = useState(hasMoreFiltersActive);
+  const moreFiltersVisible = showMore || hasMoreFiltersActive;
 
   return (
     <div className="space-y-2">
@@ -79,19 +89,6 @@ export function FilterBar({
         </select>
 
         <select
-          value={filters.articleStatus ?? ''}
-          onChange={(e) => set('articleStatus', e.target.value as HighlightSearchFilters['articleStatus'])}
-          className={selectClass}
-        >
-          <option value="">Status do artigo</option>
-          {ARTICLE_STATUSES.map((s) => (
-            <option key={s} value={s}>
-              {ARTICLE_STATUS_LABELS[s]}
-            </option>
-          ))}
-        </select>
-
-        <select
           value={filters.color ?? ''}
           onChange={(e) => set('color', e.target.value as HighlightSearchFilters['color'])}
           className={selectClass}
@@ -104,46 +101,72 @@ export function FilterBar({
           ))}
         </select>
 
-        <select
-          value={filters.yearFrom ?? ''}
-          onChange={(e) => set('yearFrom', e.target.value ? Number(e.target.value) : undefined)}
-          className={selectClass}
+        <button
+          type="button"
+          onClick={() => setShowMore((v) => !v)}
+          className="flex h-8 items-center gap-1 rounded-lg px-2 text-xs font-medium text-neutral-500 hover:bg-neutral-100 dark:text-neutral-400 dark:hover:bg-neutral-800"
         >
-          <option value="">Ano de (≥)</option>
-          {options.years.map((y) => (
-            <option key={y} value={y}>
-              {y}
-            </option>
-          ))}
-        </select>
+          <SlidersHorizontal className="h-3.5 w-3.5" />
+          {moreFiltersVisible ? 'Menos filtros' : 'Mais filtros'}
+        </button>
 
-        <select
-          value={filters.yearTo ?? ''}
-          onChange={(e) => set('yearTo', e.target.value ? Number(e.target.value) : undefined)}
-          className={selectClass}
-        >
-          <option value="">Ano até (≤)</option>
-          {options.years.map((y) => (
-            <option key={y} value={y}>
-              {y}
-            </option>
-          ))}
-        </select>
+        {moreFiltersVisible && (
+          <>
+            <select
+              value={filters.articleStatus ?? ''}
+              onChange={(e) => set('articleStatus', e.target.value as HighlightSearchFilters['articleStatus'])}
+              className={selectClass}
+            >
+              <option value="">Status do artigo</option>
+              {ARTICLE_STATUSES.map((s) => (
+                <option key={s} value={s}>
+                  {ARTICLE_STATUS_LABELS[s]}
+                </option>
+              ))}
+            </select>
 
-        <input
-          type="date"
-          value={filters.dateFrom ?? ''}
-          onChange={(e) => set('dateFrom', e.target.value)}
-          title="Destacado a partir de"
-          className={selectClass}
-        />
-        <input
-          type="date"
-          value={filters.dateTo ?? ''}
-          onChange={(e) => set('dateTo', e.target.value)}
-          title="Destacado até"
-          className={selectClass}
-        />
+            <select
+              value={filters.yearFrom ?? ''}
+              onChange={(e) => set('yearFrom', e.target.value ? Number(e.target.value) : undefined)}
+              className={selectClass}
+            >
+              <option value="">Ano de (≥)</option>
+              {options.years.map((y) => (
+                <option key={y} value={y}>
+                  {y}
+                </option>
+              ))}
+            </select>
+
+            <select
+              value={filters.yearTo ?? ''}
+              onChange={(e) => set('yearTo', e.target.value ? Number(e.target.value) : undefined)}
+              className={selectClass}
+            >
+              <option value="">Ano até (≤)</option>
+              {options.years.map((y) => (
+                <option key={y} value={y}>
+                  {y}
+                </option>
+              ))}
+            </select>
+
+            <input
+              type="date"
+              value={filters.dateFrom ?? ''}
+              onChange={(e) => set('dateFrom', e.target.value)}
+              title="Destacado a partir de"
+              className={selectClass}
+            />
+            <input
+              type="date"
+              value={filters.dateTo ?? ''}
+              onChange={(e) => set('dateTo', e.target.value)}
+              title="Destacado até"
+              className={selectClass}
+            />
+          </>
+        )}
 
         {Object.values(filters).some((v) => v !== undefined && v !== '') && (
           <button
