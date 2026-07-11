@@ -5,9 +5,10 @@ import dynamic from 'next/dynamic';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { RightPanelTabs } from './RightPanel/RightPanelTabs';
-import { CommentComposerDialog } from './CommentComposerDialog';
+import { HighlightAnnotationDialog } from './HighlightAnnotationDialog';
 import { createHighlightAction, createCommentAction, updateProgressAction, closeSessionAction } from '../actions';
 import { plainTextToTiptapDoc } from '@/modules/comments/domain/tiptap-plain-text';
+import type { TagOption } from '@/components/ui/TagMultiSelect';
 import type { ArticleData, HighlightItem, CommentItem } from './types';
 import type { HighlightColor, HighlightPositionData } from '@/modules/highlights/domain/entities';
 
@@ -23,19 +24,22 @@ export function ArticleWorkspace({
   highlights,
   comments,
   pageTexts,
+  availableTags,
 }: {
   article: ArticleData;
   highlights: HighlightItem[];
   comments: CommentItem[];
   pageTexts: string[];
+  availableTags: TagOption[];
 }) {
   const router = useRouter();
   const [currentPage, setCurrentPage] = useState(article.currentPage || 1);
   const [totalPages, setTotalPages] = useState<number | null>(article.totalPages);
-  const [pendingComment, setPendingComment] = useState<{
+  const [pendingHighlight, setPendingHighlight] = useState<{
     page: number;
     excerptText: string;
     positionData: HighlightPositionData;
+    color: HighlightColor;
   } | null>(null);
 
   const progressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -63,37 +67,38 @@ export function ArticleWorkspace({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  async function handleSelectionColor(data: {
+  function handleSelectionColor(data: {
     page: number;
     excerptText: string;
     positionData: HighlightPositionData;
     color: HighlightColor;
   }) {
+    setPendingHighlight(data);
+  }
+
+  function handleSelectionComment(data: { page: number; excerptText: string; positionData: HighlightPositionData }) {
+    setPendingHighlight({ ...data, color: 'COMENTARIO' });
+  }
+
+  async function submitPendingHighlight({ tagIds, commentText }: { tagIds: string[]; commentText: string }) {
+    if (!pendingHighlight) return;
     try {
-      await createHighlightAction({ articleId: article.id, ...data });
+      const highlight = await createHighlightAction({
+        articleId: article.id,
+        page: pendingHighlight.page,
+        excerptText: pendingHighlight.excerptText,
+        positionData: pendingHighlight.positionData,
+        color: pendingHighlight.color,
+        tagIds,
+      });
+      if (commentText) {
+        await createCommentAction({ articleId: article.id, highlightId: highlight.id, body: plainTextToTiptapDoc(commentText) });
+      }
       router.refresh();
       toast.success('Destaque criado');
     } catch {
       toast.error('Erro ao criar destaque');
     }
-  }
-
-  function handleSelectionComment(data: { page: number; excerptText: string; positionData: HighlightPositionData }) {
-    setPendingComment(data);
-  }
-
-  async function submitPendingComment(text: string) {
-    if (!pendingComment) return;
-    const highlight = await createHighlightAction({
-      articleId: article.id,
-      page: pendingComment.page,
-      excerptText: pendingComment.excerptText,
-      positionData: pendingComment.positionData,
-      color: 'COMENTARIO',
-    });
-    await createCommentAction({ articleId: article.id, highlightId: highlight.id, body: plainTextToTiptapDoc(text) });
-    router.refresh();
-    toast.success('Comentário adicionado');
   }
 
   return (
@@ -113,15 +118,23 @@ export function ArticleWorkspace({
       </div>
 
       <div className="min-h-0 border-t border-neutral-200 lg:border-l lg:border-t-0 dark:border-neutral-800">
-        <RightPanelTabs article={article} highlights={highlights} comments={comments} onJumpToPage={setCurrentPage} />
+        <RightPanelTabs
+          article={article}
+          highlights={highlights}
+          comments={comments}
+          availableTags={availableTags}
+          onJumpToPage={setCurrentPage}
+        />
       </div>
 
-      {pendingComment && (
-        <CommentComposerDialog
-          open={!!pendingComment}
-          onOpenChange={(open) => !open && setPendingComment(null)}
-          excerptText={pendingComment.excerptText}
-          onSubmit={submitPendingComment}
+      {pendingHighlight && (
+        <HighlightAnnotationDialog
+          open={!!pendingHighlight}
+          onOpenChange={(open) => !open && setPendingHighlight(null)}
+          color={pendingHighlight.color}
+          excerptText={pendingHighlight.excerptText}
+          availableTags={availableTags}
+          onSubmit={submitPendingHighlight}
         />
       )}
     </div>

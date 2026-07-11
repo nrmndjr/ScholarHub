@@ -5,17 +5,20 @@ import { SummaryTab } from './SummaryTab';
 import { HighlightsTab } from './HighlightsTab';
 import { CommentsTab } from './CommentsTab';
 import { ReferenceTab } from './ReferenceTab';
+import type { TagOption } from '@/components/ui/TagMultiSelect';
 import type { ArticleData, HighlightItem, CommentItem } from '../types';
 
 export function RightPanelTabs({
   article,
   highlights,
   comments,
+  availableTags,
   onJumpToPage,
 }: {
   article: ArticleData;
   highlights: HighlightItem[];
   comments: CommentItem[];
+  availableTags: TagOption[];
   onJumpToPage: (page: number) => void;
 }) {
   return (
@@ -32,7 +35,7 @@ export function RightPanelTabs({
           <SummaryTab articleId={article.id} initialContent={article.summaryContent} />
         </TabsContent>
         <TabsContent value="highlights">
-          <HighlightsTab articleId={article.id} highlights={highlights} onJumpToPage={onJumpToPage} />
+          <HighlightsTab articleId={article.id} highlights={highlights} availableTags={availableTags} onJumpToPage={onJumpToPage} />
         </TabsContent>
         <TabsContent value="comments">
           <CommentsTab articleId={article.id} comments={comments} onJumpToPage={onJumpToPage} />

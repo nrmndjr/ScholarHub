@@ -1,23 +1,31 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { Copy, Trash2, ChevronRight } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { Copy, Trash2, ChevronRight, Tag as TagIcon } from 'lucide-react';
 import { toast } from 'sonner';
+import { Dialog } from '@/components/ui/Dialog';
+import { TagMultiSelect, type TagOption } from '@/components/ui/TagMultiSelect';
 import { HIGHLIGHT_COLORS, HIGHLIGHT_COLOR_META, type HighlightColor } from '@/modules/highlights/domain/entities';
-import { deleteHighlightAction } from '../../actions';
+import { deleteHighlightAction, setHighlightTagsAction, createTagAction } from '../../actions';
 import { tiptapToPlainText } from '@/modules/comments/domain/tiptap-plain-text';
 import type { HighlightItem } from '../types';
 
 export function HighlightsTab({
   articleId,
   highlights,
+  availableTags,
   onJumpToPage,
 }: {
   articleId: string;
   highlights: HighlightItem[];
+  availableTags: TagOption[];
   onJumpToPage: (page: number) => void;
 }) {
+  const router = useRouter();
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [editingTagsFor, setEditingTagsFor] = useState<HighlightItem | null>(null);
+  const [tags, setTags] = useState(availableTags);
 
   const grouped = useMemo(() => {
     const map = new Map<HighlightColor, HighlightItem[]>();
@@ -72,6 +80,18 @@ export function HighlightsTab({
                       {tiptapToPlainText(item.comment.body)}
                     </p>
                   )}
+                  {item.tags.length > 0 && (
+                    <div className="mt-1.5 flex flex-wrap gap-1">
+                      {item.tags.map((tag) => (
+                        <span
+                          key={tag.id}
+                          className="rounded-full bg-accent/10 px-2 py-0.5 text-[11px] font-medium text-accent"
+                        >
+                          {tag.name}
+                        </span>
+                      ))}
+                    </div>
+                  )}
                   <div className="mt-1.5 flex gap-2">
                     <button
                       type="button"
@@ -83,6 +103,14 @@ export function HighlightsTab({
                     >
                       <Copy className="h-3 w-3" />
                       Copiar
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setEditingTagsFor(item)}
+                      className="inline-flex items-center gap-1 text-xs text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-200"
+                    >
+                      <TagIcon className="h-3 w-3" />
+                      Tags
                     </button>
                     <button
                       type="button"
@@ -100,6 +128,30 @@ export function HighlightsTab({
           </div>
         );
       })}
+
+      {editingTagsFor && (
+        <Dialog open={!!editingTagsFor} onOpenChange={(open) => !open && setEditingTagsFor(null)} title="Tags do destaque" className="max-w-md">
+          <div className="space-y-3">
+            <p className="line-clamp-3 rounded-lg bg-neutral-50 p-2 text-xs italic text-neutral-500 dark:bg-neutral-800 dark:text-neutral-400">
+              &ldquo;{editingTagsFor.excerptText}&rdquo;
+            </p>
+            <TagMultiSelect
+              allTags={tags}
+              selectedIds={editingTagsFor.tags.map((t) => t.id)}
+              onChange={async (tagIds) => {
+                setEditingTagsFor({ ...editingTagsFor, tags: tags.filter((t) => tagIds.includes(t.id)) });
+                await setHighlightTagsAction(articleId, editingTagsFor.id, tagIds);
+                router.refresh();
+              }}
+              onCreateTag={async (name) => {
+                const tag = await createTagAction(name);
+                setTags((prev) => (prev.some((t) => t.id === tag.id) ? prev : [...prev, tag]));
+                return tag;
+              }}
+            />
+          </div>
+        </Dialog>
+      )}
     </div>
   );
 }

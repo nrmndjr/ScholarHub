@@ -10,6 +10,7 @@ export async function createHighlight(
     page: number;
     excerptText: string;
     positionData: HighlightPositionData;
+    tagIds?: string[];
   },
   deps: { prisma: PrismaClient }
 ) {
@@ -24,6 +25,10 @@ export async function createHighlight(
       page: input.page,
       excerptText: input.excerptText,
       positionData: input.positionData as object,
+      tags:
+        input.tagIds && input.tagIds.length > 0
+          ? { create: input.tagIds.map((tagId) => ({ tagId })) }
+          : undefined,
     },
   });
 }

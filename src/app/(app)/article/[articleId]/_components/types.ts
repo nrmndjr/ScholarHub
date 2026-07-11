@@ -8,6 +8,7 @@ export interface HighlightItem {
   positionData: HighlightPositionData;
   createdAt: string;
   comment: { id: string; body: unknown } | null;
+  tags: { id: string; name: string }[];
 }
 
 export interface CommentItem {

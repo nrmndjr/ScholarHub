@@ -8,6 +8,7 @@ import {
   Library,
   FolderKanban,
   Network,
+  Quote,
   PenLine,
   Settings,
   BookMarked,
@@ -20,6 +21,7 @@ const NAV_ITEMS = [
   { href: '/library', label: 'Biblioteca', icon: Library },
   { href: '/projects', label: 'Projetos', icon: FolderKanban },
   { href: '/knowledge-map', label: 'Mapa do Conhecimento', icon: Network },
+  { href: '/knowledge-base', label: 'Base de Conhecimento', icon: Quote },
   { href: '/writing', label: 'Painel de Escrita', icon: PenLine },
 ] as const;
 

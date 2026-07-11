@@ -103,8 +103,9 @@ model Tag {
   color     String?
   createdAt DateTime @default(now())
 
-  user     User         @relation(fields: [userId], references: [id], onDelete: Cascade)
-  articles ArticleTag[]
+  user       User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  articles   ArticleTag[]
+  highlights HighlightTag[]
 
   @@unique([userId, name])
 }
@@ -150,6 +151,18 @@ model ArticleTag {
   tag     Tag     @relation(fields: [tagId], references: [id], onDelete: Cascade)
 
   @@id([articleId, tagId])
+}
+
+// Tags on a highlight represent the subject of that excerpt specifically,
+// not the whole article (an article can touch many themes across its highlights).
+model HighlightTag {
+  highlightId String
+  tagId       String
+
+  highlight Highlight @relation(fields: [highlightId], references: [id], onDelete: Cascade)
+  tag       Tag       @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([highlightId, tagId])
 }
 
 // ---------- Bibliographic entities ----------
@@ -301,6 +314,7 @@ model Highlight {
   article       Article        @relation(fields: [articleId], references: [id], onDelete: Cascade)
   comments      Comment[]
   writingBlocks WritingBlock[]
+  tags          HighlightTag[]
 
   @@index([articleId, color])
 }

@@ -3,6 +3,7 @@ import { getCurrentUserOrThrow } from '@/lib/session';
 import { prisma } from '@/lib/prisma';
 import { getStorage } from '@/lib/storage/storage-factory';
 import { extractAllPagesText } from '@/modules/processing/infra/pdf-text-extractor';
+import { listTags } from '@/modules/tags/use-cases/list-tags';
 import { ArticleWorkspace } from './_components/ArticleWorkspace';
 import type { ArticleData, HighlightItem, CommentItem } from './_components/types';
 import type { HighlightColor, HighlightPositionData } from '@/modules/highlights/domain/entities';
@@ -37,10 +38,10 @@ export default async function ArticlePage({
 
   if (!article || !article.file) notFound();
 
-  const [highlightRows, commentRows] = await Promise.all([
+  const [highlightRows, commentRows, allTags] = await Promise.all([
     prisma.highlight.findMany({
       where: { articleId },
-      include: { comments: { orderBy: { createdAt: 'desc' }, take: 1 } },
+      include: { comments: { orderBy: { createdAt: 'desc' }, take: 1 }, tags: { include: { tag: true } } },
       orderBy: { createdAt: 'asc' },
     }),
     prisma.comment.findMany({
@@ -48,6 +49,7 @@ export default async function ArticlePage({
       include: { highlight: true },
       orderBy: { createdAt: 'desc' },
     }),
+    listTags(user.id, { prisma }),
   ]);
 
   let pageTexts: string[] = [];
@@ -85,6 +87,7 @@ export default async function ArticlePage({
     positionData: h.positionData as unknown as HighlightPositionData,
     createdAt: h.createdAt.toISOString(),
     comment: h.comments[0] ? { id: h.comments[0].id, body: h.comments[0].body } : null,
+    tags: h.tags.map((t) => ({ id: t.tag.id, name: t.tag.name })),
   }));
 
   const comments: CommentItem[] = commentRows.map((c) => ({
@@ -98,6 +101,12 @@ export default async function ArticlePage({
   }));
 
   return (
-    <ArticleWorkspace article={articleData} highlights={highlights} comments={comments} pageTexts={pageTexts} />
+    <ArticleWorkspace
+      article={articleData}
+      highlights={highlights}
+      comments={comments}
+      pageTexts={pageTexts}
+      availableTags={allTags}
+    />
   );
 }
