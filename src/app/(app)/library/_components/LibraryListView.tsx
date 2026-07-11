@@ -3,6 +3,7 @@ import { Highlighter, MessageSquare } from 'lucide-react';
 import { Card } from '@/components/ui/Card';
 import { StatusBadge } from './StatusBadge';
 import { FavoriteButton } from './FavoriteButton';
+import { DeleteArticleButton } from './DeleteArticleButton';
 import type { LibraryArticleItem } from './types';
 
 export function LibraryListView({ items }: { items: LibraryArticleItem[] }) {
@@ -34,6 +35,7 @@ export function LibraryListView({ items }: { items: LibraryArticleItem[] }) {
             </div>
 
             <StatusBadge articleId={item.id} status={item.status} />
+            <DeleteArticleButton articleId={item.id} title={item.title} />
           </Card>
         </Link>
       ))}

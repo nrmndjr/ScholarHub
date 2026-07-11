@@ -4,6 +4,7 @@ import { Card } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { StatusBadge } from './StatusBadge';
 import { FavoriteButton } from './FavoriteButton';
+import { DeleteArticleButton } from './DeleteArticleButton';
 import type { LibraryArticleItem } from './types';
 
 export function LibraryCardView({ items }: { items: LibraryArticleItem[] }) {
@@ -14,7 +15,10 @@ export function LibraryCardView({ items }: { items: LibraryArticleItem[] }) {
           <Card className="flex h-full flex-col gap-3 p-4 transition-colors hover:border-neutral-300 dark:hover:border-neutral-700">
             <div className="flex items-start justify-between gap-2">
               <StatusBadge articleId={item.id} status={item.status} />
-              <FavoriteButton articleId={item.id} favorite={item.favorite} />
+              <div className="flex items-center gap-0.5">
+                <FavoriteButton articleId={item.id} favorite={item.favorite} />
+                <DeleteArticleButton articleId={item.id} title={item.title} />
+              </div>
             </div>
 
             <div>

@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { FavoriteButton } from './FavoriteButton';
 import { StatusBadge } from './StatusBadge';
+import { DeleteArticleButton } from './DeleteArticleButton';
 import type { LibraryArticleItem } from './types';
 
 export function LibraryTableView({ items }: { items: LibraryArticleItem[] }) {
@@ -18,6 +19,7 @@ export function LibraryTableView({ items }: { items: LibraryArticleItem[] }) {
             <th className="px-3 py-2 font-medium">Destaques</th>
             <th className="px-3 py-2 font-medium">Comentários</th>
             <th className="px-3 py-2 font-medium">Última leitura</th>
+            <th className="w-8 px-3 py-2"></th>
           </tr>
         </thead>
         <tbody className="divide-y divide-neutral-100 dark:divide-neutral-800">
@@ -45,6 +47,9 @@ export function LibraryTableView({ items }: { items: LibraryArticleItem[] }) {
               <td className="px-3 py-2 text-neutral-500 dark:text-neutral-400">{item.commentsCount}</td>
               <td className="px-3 py-2 text-neutral-500 dark:text-neutral-400">
                 {item.lastOpenedAt ? new Date(item.lastOpenedAt).toLocaleDateString('pt-BR') : '—'}
+              </td>
+              <td className="px-3 py-2">
+                <DeleteArticleButton articleId={item.id} title={item.title} />
               </td>
             </tr>
           ))}
