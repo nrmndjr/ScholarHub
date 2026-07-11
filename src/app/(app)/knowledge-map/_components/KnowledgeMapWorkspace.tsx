@@ -1,9 +1,9 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
-import { Network } from 'lucide-react';
+import { Network, Search, X } from 'lucide-react';
 import {
   KNOWLEDGE_NODE_TYPES,
   KNOWLEDGE_NODE_TYPE_META,
@@ -25,6 +25,9 @@ export function KnowledgeMapWorkspace({ graph }: { graph: KnowledgeGraphData }) 
   const [darkMode, setDarkMode] = useState(
     () => typeof window !== 'undefined' && window.matchMedia('(prefers-color-scheme: dark)').matches
   );
+  const [nodeQuery, setNodeQuery] = useState('');
+  const [nodeQueryFocused, setNodeQueryFocused] = useState(false);
+  const searchBoxRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const mq = window.matchMedia('(prefers-color-scheme: dark)');
@@ -47,6 +50,22 @@ export function KnowledgeMapWorkspace({ graph }: { graph: KnowledgeGraphData }) 
 
   const selectedNode = selectedNodeId ? (nodesById.get(selectedNodeId) ?? null) : null;
 
+  const nodeMatches = useMemo(() => {
+    const q = nodeQuery.trim().toLowerCase();
+    if (!q) return [];
+    return filteredNodes.filter((n) => n.label.toLowerCase().includes(q)).slice(0, 8);
+  }, [nodeQuery, filteredNodes]);
+
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (searchBoxRef.current && !searchBoxRef.current.contains(e.target as Node)) {
+        setNodeQueryFocused(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
   function toggleType(type: KnowledgeNodeType) {
     setVisibleTypes((prev) => {
       const next = new Set(prev);
@@ -54,6 +73,11 @@ export function KnowledgeMapWorkspace({ graph }: { graph: KnowledgeGraphData }) 
       else next.add(type);
       return next;
     });
+  }
+
+  function focusNode(nodeId: string) {
+    setSelectedNodeId(nodeId);
+    setNodeQueryFocused(false);
   }
 
   if (graph.nodes.length === 0) {
@@ -96,6 +120,54 @@ export function KnowledgeMapWorkspace({ graph }: { graph: KnowledgeGraphData }) 
             );
           })}
         </div>
+
+        <div ref={searchBoxRef} className="relative ml-2 w-52">
+          <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-neutral-400" />
+          <input
+            value={nodeQuery}
+            onChange={(e) => setNodeQuery(e.target.value)}
+            onFocus={() => setNodeQueryFocused(true)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && nodeMatches[0]) focusNode(nodeMatches[0].id);
+              if (e.key === 'Escape') setNodeQueryFocused(false);
+            }}
+            placeholder="Buscar nó..."
+            className="h-7 w-full rounded-full border border-neutral-300 bg-transparent pl-8 pr-7 text-xs outline-none focus:border-neutral-400 dark:border-neutral-700 dark:focus:border-neutral-600"
+          />
+          {nodeQuery && (
+            <button
+              type="button"
+              onClick={() => setNodeQuery('')}
+              className="absolute right-2 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300"
+            >
+              <X className="h-3.5 w-3.5" />
+            </button>
+          )}
+
+          {nodeQueryFocused && nodeQuery && (
+            <div className="absolute left-0 top-full z-10 mt-1 w-full overflow-hidden rounded-lg border border-neutral-200 bg-white shadow-lg dark:border-neutral-800 dark:bg-neutral-900">
+              {nodeMatches.length === 0 ? (
+                <p className="px-3 py-2 text-xs text-neutral-400">Nenhum nó encontrado.</p>
+              ) : (
+                nodeMatches.map((n) => (
+                  <button
+                    key={n.id}
+                    type="button"
+                    onClick={() => focusNode(n.id)}
+                    className="flex w-full items-center gap-2 px-3 py-1.5 text-left text-xs hover:bg-neutral-100 dark:hover:bg-neutral-800"
+                  >
+                    <span
+                      className="h-2 w-2 shrink-0 rounded-full"
+                      style={{ backgroundColor: KNOWLEDGE_NODE_TYPE_META[n.type].color }}
+                    />
+                    <span className="truncate">{n.label}</span>
+                  </button>
+                ))
+              )}
+            </div>
+          )}
+        </div>
+
         <span className="ml-auto text-xs text-neutral-400">
           {filteredNodes.length} nós · {filteredEdges.length} conexões
         </span>

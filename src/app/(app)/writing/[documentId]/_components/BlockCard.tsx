@@ -1,13 +1,12 @@
 'use client';
 
-import { useState } from 'react';
 import Link from 'next/link';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { GripVertical, ExternalLink, Trash2, Copy } from 'lucide-react';
 import { toast } from 'sonner';
 import { Card } from '@/components/ui/Card';
-import { Textarea } from '@/components/ui/Textarea';
+import { RichTextBlockEditor } from './RichTextBlockEditor';
 import { HIGHLIGHT_COLOR_META, type HighlightColor } from '@/modules/highlights/domain/entities';
 import { WRITING_BLOCK_TYPE_LABELS, type WritingBlockData } from '@/modules/writing/domain/entities';
 import { updateBlockTextAction, deleteBlockAction } from '../actions';
@@ -45,22 +44,18 @@ function SourceMeta({ block }: { block: WritingBlockData }) {
   );
 }
 
-export function BlockCard({ block, documentId }: { block: WritingBlockData; documentId: string }) {
+export function BlockCard({
+  block,
+  documentId,
+  onTextChange,
+}: {
+  block: WritingBlockData;
+  documentId: string;
+  onTextChange?: (blockId: string, html: string) => void;
+}) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: block.id });
-  const [text, setText] = useState(block.textContent ?? '');
-  const [saving, setSaving] = useState(false);
 
   const style = { transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.5 : 1 };
-
-  async function handleTextBlur() {
-    if (text === (block.textContent ?? '')) return;
-    setSaving(true);
-    try {
-      await updateBlockTextAction(block.id, text);
-    } finally {
-      setSaving(false);
-    }
-  }
 
   async function handleDelete() {
     if (!confirm('Remover este bloco?')) return;
@@ -121,14 +116,13 @@ export function BlockCard({ block, documentId }: { block: WritingBlockData; docu
             </div>
 
             {block.blockType === 'TEXT' ? (
-              <Textarea
-                value={text}
-                onChange={(e) => setText(e.target.value)}
-                onBlur={handleTextBlur}
-                placeholder="Escreva livremente aqui..."
-                rows={3}
-                className="mt-2 border-none bg-transparent p-0 text-sm focus-visible:ring-0"
-              />
+              <div className="mt-2">
+                <RichTextBlockEditor
+                  initialContent={block.textContent ?? ''}
+                  onSave={(html) => updateBlockTextAction(block.id, html)}
+                  onChange={(html) => onTextChange?.(block.id, html)}
+                />
+              </div>
             ) : (
               <p className="mt-2 whitespace-pre-wrap text-sm text-neutral-700 dark:text-neutral-300">
                 {block.blockType === 'HIGHLIGHT_REF' && `"${block.excerptText}"`}
@@ -139,7 +133,6 @@ export function BlockCard({ block, documentId }: { block: WritingBlockData; docu
             )}
 
             <SourceMeta block={block} />
-            {saving && <span className="mt-1 block text-[10px] text-neutral-400">Salvando...</span>}
           </div>
         </div>
       </Card>

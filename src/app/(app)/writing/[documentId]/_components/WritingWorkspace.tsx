@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { ArrowLeft, Plus } from 'lucide-react';
@@ -15,11 +15,13 @@ import {
 } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy, arrayMove } from '@dnd-kit/sortable';
 import { Button } from '@/components/ui/Button';
+import { getDocumentWordAndCharCount } from '@/modules/writing/domain/block-text';
 import type { WritingBlockData } from '@/modules/writing/domain/entities';
 import type { WritingDocumentDetail } from '@/modules/writing/use-cases/get-document';
 import type { InsertableArticle } from '@/modules/writing/use-cases/list-insertable-content';
 import { BlockCard } from './BlockCard';
 import { ContentPicker } from './ContentPicker';
+import { ExportMenu } from './ExportMenu';
 import { renameDocumentAction, addTextBlockAction, addReferenceBlockAction, reorderBlocksAction } from '../actions';
 
 function CanvasDropzone({ children }: { children: React.ReactNode }) {
@@ -49,6 +51,12 @@ export function WritingWorkspace({
   }
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 4 } }));
+
+  const { words, chars } = useMemo(() => getDocumentWordAndCharCount(blocks), [blocks]);
+
+  function handleBlockTextChange(blockId: string, html: string) {
+    setBlocks((prev) => prev.map((b) => (b.id === blockId ? { ...b, textContent: html } : b)));
+  }
 
   async function handleTitleBlur() {
     if (title.trim() && title !== document.title) {
@@ -105,6 +113,10 @@ export function WritingWorkspace({
           onBlur={handleTitleBlur}
           className="flex-1 bg-transparent text-sm font-semibold outline-none"
         />
+        <span className="shrink-0 text-xs text-neutral-400">
+          {words} palavra{words === 1 ? '' : 's'} · {chars} caractere{chars === 1 ? '' : 's'}
+        </span>
+        <ExportMenu title={title} blocks={blocks} />
         <Button size="sm" variant="secondary" onClick={handleAddText}>
           <Plus className="h-4 w-4" />
           Texto livre
@@ -126,7 +138,12 @@ export function WritingWorkspace({
               <CanvasDropzone>
                 <SortableContext items={blocks.map((b) => b.id)} strategy={verticalListSortingStrategy}>
                   {blocks.map((block) => (
-                    <BlockCard key={block.id} block={block} documentId={document.id} />
+                    <BlockCard
+                      key={block.id}
+                      block={block}
+                      documentId={document.id}
+                      onTextChange={handleBlockTextChange}
+                    />
                   ))}
                 </SortableContext>
               </CanvasDropzone>

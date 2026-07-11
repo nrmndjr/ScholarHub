@@ -65,6 +65,16 @@ export function KnowledgeGraph({
     [nodes, edges]
   );
 
+  useEffect(() => {
+    if (!selectedNodeId) return;
+    const node = graphData.nodes.find((n) => n.id === selectedNodeId) as NodeObject<KnowledgeGraphNode> | undefined;
+    if (node && typeof node.x === 'number' && typeof node.y === 'number') {
+      graphRef.current?.centerAt(node.x, node.y, 600);
+      graphRef.current?.zoom(3, 600);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedNodeId]);
+
   return (
     <div ref={containerRef} className="h-full w-full">
       <ForceGraph2D
