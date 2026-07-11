@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, useTransition } from 'react';
-import { ChevronDown, ChevronRight, Search } from 'lucide-react';
+import { ChevronDown, ChevronRight, Loader2, Search } from 'lucide-react';
 import { Input } from '@/components/ui/Input';
 import { HIGHLIGHT_COLOR_META, type HighlightColor } from '@/modules/highlights/domain/entities';
 import type { InsertableArticle } from '@/modules/writing/use-cases/list-insertable-content';
@@ -76,7 +76,11 @@ export function ContentPicker({ initial }: { initial: InsertableArticle[] }) {
       <div className="border-b border-neutral-200 p-3 dark:border-neutral-800">
         <h2 className="mb-2 text-sm font-semibold">Suas leituras</h2>
         <div className="relative">
-          <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-neutral-400" />
+          {isPending ? (
+            <Loader2 className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 animate-spin text-neutral-400" />
+          ) : (
+            <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-neutral-400" />
+          )}
           <Input
             value={query}
             onChange={(e) => setQuery(e.target.value)}

@@ -8,6 +8,7 @@ import { RightPanelTabs } from './RightPanel/RightPanelTabs';
 import { HighlightAnnotationDialog } from './HighlightAnnotationDialog';
 import { createHighlightAction, createCommentAction, updateProgressAction, closeSessionAction } from '../actions';
 import { plainTextToTiptapDoc } from '@/modules/comments/domain/tiptap-plain-text';
+import { Breadcrumb } from '@/components/ui/Breadcrumb';
 import type { TagOption } from '@/components/ui/TagMultiSelect';
 import type { ArticleData, HighlightItem, CommentItem } from './types';
 import type { HighlightColor, HighlightPositionData } from '@/modules/highlights/domain/entities';
@@ -25,12 +26,14 @@ export function ArticleWorkspace({
   comments,
   pageTexts,
   availableTags,
+  project,
 }: {
   article: ArticleData;
   highlights: HighlightItem[];
   comments: CommentItem[];
   pageTexts: string[];
   availableTags: TagOption[];
+  project?: { id: string; name: string } | null;
 }) {
   const router = useRouter();
   const [currentPage, setCurrentPage] = useState(article.currentPage || 1);
@@ -101,30 +104,44 @@ export function ArticleWorkspace({
     }
   }
 
+  const breadcrumbItems = project
+    ? [
+        { label: 'Projetos', href: '/projects' },
+        { label: project.name, href: `/projects/${project.id}` },
+        { label: article.title },
+      ]
+    : [{ label: 'Biblioteca', href: '/library' }, { label: article.title }];
+
   return (
-    <div className="-m-6 grid h-[calc(100vh-3.5rem)] grid-cols-1 lg:grid-cols-[1fr_380px]">
-      <div className="min-h-0">
-        <PdfViewer
-          fileUrl={article.fileUrl}
-          currentPage={currentPage}
-          onPageChange={setCurrentPage}
-          onDocumentLoad={(n) => setTotalPages(n)}
-          totalPages={totalPages}
-          highlights={highlights}
-          pageTexts={pageTexts}
-          onSelectionColor={handleSelectionColor}
-          onSelectionComment={handleSelectionComment}
-        />
+    <div className="-m-6 flex h-[calc(100vh-3.5rem)] flex-col">
+      <div className="shrink-0 border-b border-neutral-200 px-4 py-2 dark:border-neutral-800">
+        <Breadcrumb items={breadcrumbItems} />
       </div>
 
-      <div className="min-h-0 border-t border-neutral-200 lg:border-l lg:border-t-0 dark:border-neutral-800">
-        <RightPanelTabs
-          article={article}
-          highlights={highlights}
-          comments={comments}
-          availableTags={availableTags}
-          onJumpToPage={setCurrentPage}
-        />
+      <div className="grid min-h-0 flex-1 grid-cols-1 lg:grid-cols-[1fr_380px]">
+        <div className="min-h-0">
+          <PdfViewer
+            fileUrl={article.fileUrl}
+            currentPage={currentPage}
+            onPageChange={setCurrentPage}
+            onDocumentLoad={(n) => setTotalPages(n)}
+            totalPages={totalPages}
+            highlights={highlights}
+            pageTexts={pageTexts}
+            onSelectionColor={handleSelectionColor}
+            onSelectionComment={handleSelectionComment}
+          />
+        </div>
+
+        <div className="min-h-0 border-t border-neutral-200 lg:border-l lg:border-t-0 dark:border-neutral-800">
+          <RightPanelTabs
+            article={article}
+            highlights={highlights}
+            comments={comments}
+            availableTags={availableTags}
+            onJumpToPage={setCurrentPage}
+          />
+        </div>
       </div>
 
       {pendingHighlight && (

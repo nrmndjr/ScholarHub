@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useTransition } from 'react';
 import Link from 'next/link';
-import { BookOpen } from 'lucide-react';
+import { BookOpen, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { FilterBar, type KnowledgeBaseFilterOptions } from './FilterBar';
 import { TagSidebar } from './TagSidebar';
@@ -59,8 +59,9 @@ export function KnowledgeBaseWorkspace({
         </div>
 
         <div className="flex-1 overflow-y-auto p-4" style={{ opacity: isPending ? 0.6 : 1 }}>
-          <p className="mb-3 text-xs text-neutral-400">
+          <p className="mb-3 flex items-center gap-1.5 text-xs text-neutral-400">
             {results.length} destaque{results.length === 1 ? '' : 's'} encontrado{results.length === 1 ? '' : 's'}
+            {isPending && <Loader2 className="h-3 w-3 animate-spin" />}
           </p>
 
           {results.length === 0 ? (

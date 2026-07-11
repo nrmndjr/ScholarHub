@@ -1,13 +1,16 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Placeholder from '@tiptap/extension-placeholder';
+import { Loader2 } from 'lucide-react';
 import { updateSummaryAction } from '../../actions';
 
 export function SummaryTab({ articleId, initialContent }: { articleId: string; initialContent: unknown }) {
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const idleTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
 
   const editor = useEditor({
     immediatelyRender: false,
@@ -24,8 +27,12 @@ export function SummaryTab({ articleId, initialContent }: { articleId: string; i
     },
     onUpdate: ({ editor }) => {
       if (saveTimer.current) clearTimeout(saveTimer.current);
-      saveTimer.current = setTimeout(() => {
-        updateSummaryAction(articleId, editor.getJSON());
+      if (idleTimer.current) clearTimeout(idleTimer.current);
+      setSaveStatus('saving');
+      saveTimer.current = setTimeout(async () => {
+        await updateSummaryAction(articleId, editor.getJSON());
+        setSaveStatus('saved');
+        idleTimer.current = setTimeout(() => setSaveStatus('idle'), 2000);
       }, 1000);
     },
   });
@@ -33,11 +40,21 @@ export function SummaryTab({ articleId, initialContent }: { articleId: string; i
   useEffect(() => {
     return () => {
       if (saveTimer.current) clearTimeout(saveTimer.current);
+      if (idleTimer.current) clearTimeout(idleTimer.current);
     };
   }, []);
 
   return (
     <div className="rounded-lg border border-neutral-200 p-3 dark:border-neutral-800">
+      <div className="mb-1.5 flex h-4 items-center justify-end gap-1.5 text-[11px] text-neutral-400">
+        {saveStatus === 'saving' && (
+          <>
+            <Loader2 className="h-3 w-3 animate-spin" />
+            Salvando...
+          </>
+        )}
+        {saveStatus === 'saved' && 'Salvo'}
+      </div>
       <EditorContent editor={editor} />
     </div>
   );

@@ -49,7 +49,7 @@ export function ProjectArticlesList({ articles, projectId }: { articles: Project
           key={article.id}
           className="flex items-center gap-4 p-3 transition-colors hover:border-neutral-300 dark:hover:border-neutral-700"
         >
-          <Link href={`/article/${article.id}`} className="min-w-0 flex-1">
+          <Link href={`/article/${article.id}?project=${projectId}`} className="min-w-0 flex-1">
             <p className="truncate text-sm font-medium">{article.title}</p>
             <p className="truncate text-xs text-neutral-500 dark:text-neutral-400">
               {article.authors.join(', ') || 'Sem autores'}

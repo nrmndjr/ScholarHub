@@ -1,6 +1,5 @@
-import Link from 'next/link';
-import { ArrowLeft } from 'lucide-react';
 import { Card } from '@/components/ui/Card';
+import { Breadcrumb } from '@/components/ui/Breadcrumb';
 import { HighlightResultCard } from '../../../_components/HighlightResultCard';
 import { YearTimelineChart } from './YearTimelineChart';
 import type { TagDetail } from '@/modules/knowledge-base/use-cases/get-tag-detail';
@@ -9,13 +8,7 @@ export function TagDetailView({ detail }: { detail: TagDetail }) {
   return (
     <div className="space-y-6">
       <div>
-        <Link
-          href="/knowledge-base"
-          className="mb-2 inline-flex items-center gap-1 text-xs text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-200"
-        >
-          <ArrowLeft className="h-3.5 w-3.5" />
-          Base de Conhecimento
-        </Link>
+        <Breadcrumb items={[{ label: 'Base de Conhecimento', href: '/knowledge-base' }, { label: detail.name }]} />
         <h1 className="text-lg font-semibold">{detail.name}</h1>
         <p className="text-sm text-neutral-500 dark:text-neutral-400">
           Eixo temático — visão consolidada de tudo que você já destacou sobre este assunto.

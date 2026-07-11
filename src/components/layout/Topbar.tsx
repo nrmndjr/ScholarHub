@@ -1,4 +1,5 @@
 import { signOut } from '@/lib/auth';
+import { GlobalSearch } from './GlobalSearch';
 
 function initials(name?: string | null, email?: string | null) {
   const source = name?.trim() || email || '?';
@@ -13,7 +14,7 @@ function initials(name?: string | null, email?: string | null) {
 export function Topbar({ user }: { user: { name?: string | null; email?: string | null } }) {
   return (
     <header className="flex h-14 shrink-0 items-center justify-between border-b border-neutral-200 px-6 dark:border-neutral-800">
-      <div />
+      <GlobalSearch />
       <div className="flex items-center gap-3">
         <div className="flex h-8 w-8 items-center justify-center rounded-full bg-neutral-900 text-xs font-medium text-white dark:bg-neutral-100 dark:text-neutral-900">
           {initials(user.name, user.email)}

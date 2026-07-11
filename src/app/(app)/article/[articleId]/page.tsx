@@ -21,10 +21,10 @@ export default async function ArticlePage({
   searchParams,
 }: {
   params: Promise<{ articleId: string }>;
-  searchParams: Promise<{ page?: string }>;
+  searchParams: Promise<{ page?: string; project?: string }>;
 }) {
   const { articleId } = await params;
-  const { page: pageParam } = await searchParams;
+  const { page: pageParam, project: projectIdParam } = await searchParams;
   const user = await getCurrentUserOrThrow();
 
   const article = await prisma.article.findFirst({
@@ -37,6 +37,10 @@ export default async function ArticlePage({
   });
 
   if (!article || !article.file) notFound();
+
+  const project = projectIdParam
+    ? await prisma.project.findFirst({ where: { id: projectIdParam, userId: user.id }, select: { id: true, name: true } })
+    : null;
 
   const [highlightRows, commentRows, allTags] = await Promise.all([
     prisma.highlight.findMany({
@@ -107,6 +111,7 @@ export default async function ArticlePage({
       comments={comments}
       pageTexts={pageTexts}
       availableTags={allTags}
+      project={project}
     />
   );
 }
