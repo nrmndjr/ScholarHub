@@ -27,22 +27,23 @@ model User {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
-  accounts         Account[]
-  sessions         Session[]
-  folders          Folder[]
-  tags             Tag[]
-  projects         Project[]
-  articles         Article[]
-  highlights       Highlight[]
-  comments         Comment[]
-  readingSessions  ReadingSession[]
-  knowledgeNodes   KnowledgeMapNode[]
-  knowledgeEdges   KnowledgeMapEdge[]
-  writingDocuments WritingDocument[]
-  writingBlocks    WritingBlock[]
-  savedFilters     SavedFilter[]
-  goals            Goal[]
-  achievements     UserAchievement[]
+  accounts           Account[]
+  sessions           Session[]
+  folders            Folder[]
+  tags               Tag[]
+  projects           Project[]
+  articles           Article[]
+  highlights         Highlight[]
+  comments           Comment[]
+  readingSessions    ReadingSession[]
+  knowledgeNodes     KnowledgeMapNode[]
+  knowledgeEdges     KnowledgeMapEdge[]
+  writingDocuments   WritingDocument[]
+  writingBlocks      WritingBlock[]
+  savedFilters       SavedFilter[]
+  goals              Goal[]
+  achievements       UserAchievement[]
+  engagementSettings EngagementSettings?
 }
 
 model Account {
@@ -491,4 +492,24 @@ model UserAchievement {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, badgeKey])
+}
+
+// One row per user — created on demand (get-or-create) the first time settings are read.
+model EngagementSettings {
+  id                   String    @id @default(cuid())
+  userId               String    @unique
+  gamificationEnabled  Boolean   @default(true)
+  showBadges           Boolean   @default(true)
+  remindersEnabled     Boolean   @default(true)
+  enabledReminderTypes Json      @default("[\"STALLED_ARTICLE\",\"ALMOST_DONE\",\"DAILY_GOAL\",\"INBOX_PENDING\"]")
+  reminderDays         Json      @default("[]") // [] = every day; else array of "MON".."SUN"
+  reminderTime         String? // "HH:mm" — reminders only show from this hour onward
+  dailyGoalMinutes     Int?
+  weeklyGoalMinutes    Int?
+  monthlyGoalMinutes   Int?
+  pausedUntil          DateTime?
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }

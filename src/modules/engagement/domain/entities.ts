@@ -120,3 +120,68 @@ export interface JourneyStatus {
   nextStage: JourneyStageDefinition | null;
   pointsToNextStage: number | null;
 }
+
+export const REMINDER_TYPES = ['STALLED_ARTICLE', 'ALMOST_DONE', 'DAILY_GOAL', 'INBOX_PENDING'] as const;
+export type ReminderType = (typeof REMINDER_TYPES)[number];
+
+export const REMINDER_TYPE_LABELS: Record<ReminderType, string> = {
+  STALLED_ARTICLE: 'Leitura interrompida',
+  ALMOST_DONE: 'Perto de concluir',
+  DAILY_GOAL: 'Meta diária não atingida',
+  INBOX_PENDING: 'Inbox pendente',
+};
+
+export interface Reminder {
+  type: ReminderType;
+  message: string;
+}
+
+export const WEEKDAYS = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'] as const;
+export type Weekday = (typeof WEEKDAYS)[number];
+
+export const WEEKDAY_LABELS: Record<Weekday, string> = {
+  MON: 'Seg',
+  TUE: 'Ter',
+  WED: 'Qua',
+  THU: 'Qui',
+  FRI: 'Sex',
+  SAT: 'Sáb',
+  SUN: 'Dom',
+};
+
+export interface EngagementSettingsData {
+  gamificationEnabled: boolean;
+  showBadges: boolean;
+  remindersEnabled: boolean;
+  enabledReminderTypes: ReminderType[];
+  reminderDays: Weekday[];
+  reminderTime: string | null;
+  dailyGoalMinutes: number | null;
+  weeklyGoalMinutes: number | null;
+  monthlyGoalMinutes: number | null;
+  pausedUntil: string | null;
+}
+
+export interface TimelineEntry {
+  label: string;
+}
+
+export interface TimelineGroup {
+  heading: string;
+  entries: TimelineEntry[];
+}
+
+export interface HabitBarDatum {
+  label: string;
+  value: number;
+}
+
+export interface HabitStats {
+  minutesByWeekday: HabitBarDatum[];
+  minutesByHour: HabitBarDatum[];
+  avgSessionMinutes: number;
+  avgPagesPerSession: number;
+  avgDaysToComplete: number | null;
+  topThemes: HabitBarDatum[];
+  topProjects: HabitBarDatum[];
+}
