@@ -2,6 +2,10 @@
 
 import { useState } from 'react';
 import { Card } from '@/components/ui/Card';
+import { cn } from '@/lib/utils';
+
+const RANGE_OPTIONS = [7, 14, 30] as const;
+type RangeOption = (typeof RANGE_OPTIONS)[number];
 
 function formatDayLabel(dateStr: string) {
   const date = new Date(`${dateStr}T00:00:00`);
@@ -13,20 +17,39 @@ function formatFullDate(dateStr: string) {
   return date.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' });
 }
 
-export function ReadingActivityChart({ data }: { data: Array<{ date: string; minutes: number }> }) {
+export function ReadingActivityChart({ data: fullData }: { data: Array<{ date: string; minutes: number }> }) {
   const [hovered, setHovered] = useState<string | null>(null);
+  const [range, setRange] = useState<RangeOption>(14);
+  const data = fullData.slice(-range);
   const max = Math.max(1, ...data.map((d) => d.minutes));
   const hoveredEntry = data.find((d) => d.date === hovered);
 
   return (
     <Card className="p-4">
-      <div className="mb-3 flex items-baseline justify-between">
+      <div className="mb-3 flex items-baseline justify-between gap-2">
         <h2 className="text-sm font-semibold">Atividade de leitura</h2>
-        <p className="text-xs text-neutral-500 dark:text-neutral-400">
-          {hoveredEntry
-            ? `${hoveredEntry.minutes} min · ${formatFullDate(hoveredEntry.date)}`
-            : 'Últimos 14 dias (minutos por dia)'}
-        </p>
+        <div className="flex items-center gap-2">
+          <p className="text-xs text-neutral-500 dark:text-neutral-400">
+            {hoveredEntry ? `${hoveredEntry.minutes} min · ${formatFullDate(hoveredEntry.date)}` : 'Minutos por dia'}
+          </p>
+          <div className="flex rounded-md border border-neutral-200 text-[11px] dark:border-neutral-800">
+            {RANGE_OPTIONS.map((opt) => (
+              <button
+                key={opt}
+                type="button"
+                onClick={() => setRange(opt)}
+                className={cn(
+                  'px-1.5 py-0.5 font-medium first:rounded-l-md last:rounded-r-md',
+                  range === opt
+                    ? 'bg-neutral-900 text-white dark:bg-neutral-100 dark:text-neutral-900'
+                    : 'text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-200'
+                )}
+              >
+                {opt}d
+              </button>
+            ))}
+          </div>
+        </div>
       </div>
 
       <div className="flex h-28 gap-1">

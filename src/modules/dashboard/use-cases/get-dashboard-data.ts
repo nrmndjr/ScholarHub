@@ -1,7 +1,9 @@
 import type { PrismaClient } from '@/generated/prisma/client';
 import type { HighlightColor } from '@/modules/highlights/domain/entities';
 
-const ACTIVITY_DAYS = 14;
+// Fetched at the widest supported range; the chart itself slices this down
+// client-side for the 7/14/30-day selector, avoiding a server round-trip per toggle.
+const ACTIVITY_DAYS = 30;
 
 export interface DashboardData {
   counts: {

@@ -9,26 +9,30 @@ import { cn } from '@/lib/utils';
 
 export function UploadDropzone() {
   const router = useRouter();
-  const [uploading, setUploading] = useState(0);
+  const [batch, setBatch] = useState<{ total: number; done: number } | null>(null);
 
   const onDrop = useCallback(
     async (acceptedFiles: File[]) => {
       if (acceptedFiles.length === 0) return;
-      setUploading((n) => n + acceptedFiles.length);
+      setBatch({ total: acceptedFiles.length, done: 0 });
 
       const results = await Promise.allSettled(
         acceptedFiles.map(async (file) => {
-          const formData = new FormData();
-          formData.append('file', file);
-          const res = await fetch('/api/upload', { method: 'POST', body: formData });
-          if (!res.ok) {
-            const body = await res.json().catch(() => null);
-            throw new Error(body?.error ?? `Falha ao enviar ${file.name}`);
+          try {
+            const formData = new FormData();
+            formData.append('file', file);
+            const res = await fetch('/api/upload', { method: 'POST', body: formData });
+            if (!res.ok) {
+              const body = await res.json().catch(() => null);
+              throw new Error(body?.error ?? `Falha ao enviar ${file.name}`);
+            }
+          } finally {
+            setBatch((prev) => (prev ? { ...prev, done: prev.done + 1 } : prev));
           }
         })
       );
 
-      setUploading((n) => n - acceptedFiles.length);
+      setBatch(null);
 
       const failures = results.filter((r) => r.status === 'rejected') as PromiseRejectedResult[];
       if (failures.length > 0) {
@@ -61,14 +65,26 @@ export function UploadDropzone() {
       )}
     >
       <input {...getInputProps()} />
-      {uploading > 0 ? (
+      {batch ? (
         <Loader2 className="h-6 w-6 animate-spin text-neutral-400" />
       ) : (
         <UploadCloud className="h-6 w-6 text-neutral-400" />
       )}
       <p className="text-sm font-medium">
-        {isDragActive ? 'Solte os PDFs aqui' : 'Arraste PDFs aqui ou clique para selecionar'}
+        {batch
+          ? `Enviando ${batch.done} de ${batch.total} arquivo${batch.total === 1 ? '' : 's'}...`
+          : isDragActive
+            ? 'Solte os PDFs aqui'
+            : 'Arraste PDFs aqui ou clique para selecionar'}
       </p>
+      {batch && batch.total > 1 && (
+        <div className="h-1 w-full max-w-xs overflow-hidden rounded-full bg-neutral-200 dark:bg-neutral-800">
+          <div
+            className="h-full rounded-full bg-accent transition-all"
+            style={{ width: `${(batch.done / batch.total) * 100}%` }}
+          />
+        </div>
+      )}
       <p className="text-xs text-neutral-500 dark:text-neutral-400">Apenas arquivos .pdf, até 50MB cada</p>
     </div>
   );
