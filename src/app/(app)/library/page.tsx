@@ -1,11 +1,12 @@
 import { getCurrentUserOrThrow } from '@/lib/session';
 import { prisma } from '@/lib/prisma';
 import { listLibraryArticles, listLibraryFilterOptions, type LibrarySort } from '@/modules/articles/use-cases/list-library-articles';
+import { listFolders } from '@/modules/folders/use-cases/list-folders';
+import { listTags } from '@/modules/tags/use-cases/list-tags';
+import { listProjects } from '@/modules/projects/use-cases/list-projects';
 import Link from 'next/link';
 import { LibraryToolbar } from './_components/LibraryToolbar';
-import { LibraryCardView } from './_components/LibraryCardView';
-import { LibraryListView } from './_components/LibraryListView';
-import { LibraryTableView } from './_components/LibraryTableView';
+import { LibraryContent } from './_components/LibraryContent';
 import type { LibraryArticleItem } from './_components/types';
 import { Library } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
@@ -42,16 +43,26 @@ export default async function LibraryPage({
 
   const hasActiveFilters = Object.values(filters).some((v) => v !== undefined && v !== false);
 
-  const [articles, filterOptions] = await Promise.all([
+  const [articles, filterOptions, allFolders, allTags, allProjects] = await Promise.all([
     listLibraryArticles({ userId: user.id, filters, sort }, { prisma }),
     listLibraryFilterOptions(user.id, { prisma }),
+    listFolders(user.id, { prisma }),
+    listTags(user.id, { prisma }),
+    listProjects(user.id, { prisma }),
   ]);
+
+  const organizeOptions = {
+    folders: allFolders.map((f) => ({ id: f.id, name: f.name })),
+    tags: allTags.map((t) => ({ id: t.id, name: t.name })),
+    projects: allProjects.map((p) => ({ id: p.id, name: p.name })),
+  };
 
   const items: LibraryArticleItem[] = articles.map((article) => {
     const totalSeconds = article.readingSessions.reduce((sum, s) => sum + (s.durationSeconds ?? 0), 0);
     return {
       id: article.id,
       title: article.title,
+      completenessScore: article.completenessScore,
       authors: article.authors.map((a) => a.author.name),
       year: article.year,
       journal: article.journal?.name ?? null,
@@ -100,12 +111,8 @@ export default async function LibraryPage({
             </Link>
           )}
         </div>
-      ) : view === 'list' ? (
-        <LibraryListView items={items} />
-      ) : view === 'table' ? (
-        <LibraryTableView items={items} />
       ) : (
-        <LibraryCardView items={items} />
+        <LibraryContent items={items} view={view} organizeOptions={organizeOptions} />
       )}
     </div>
   );

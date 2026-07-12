@@ -14,12 +14,17 @@ import {
   Moon,
   Sun,
   PanelLeft,
+  PanelLeftClose,
+  PanelLeftOpen,
   Search,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { HIGHLIGHT_COLOR_META, type HighlightColor, type HighlightPositionData } from '@/modules/highlights/domain/entities';
+import { useFocusMode, setFocusMode } from '@/lib/focus-mode';
 import { SelectionMenu } from './SelectionMenu';
 import type { HighlightItem } from './types';
+
+const QUICK_SAVE_COLOR: HighlightColor = 'CONCEITO_IMPORTANTE';
 
 pdfjs.GlobalWorkerOptions.workerSrc = new URL('pdfjs-dist/build/pdf.worker.min.mjs', import.meta.url).toString();
 
@@ -50,6 +55,7 @@ export function PdfViewer({
   pageTexts,
   onSelectionColor,
   onSelectionComment,
+  onQuickSave,
 }: {
   fileUrl: string;
   currentPage: number;
@@ -65,6 +71,7 @@ export function PdfViewer({
     color: HighlightColor;
   }) => void;
   onSelectionComment: (data: { page: number; excerptText: string; positionData: HighlightPositionData }) => void;
+  onQuickSave: (data: { page: number; excerptText: string; positionData: HighlightPositionData; color: HighlightColor }) => void;
 }) {
   const [numPages, setNumPages] = useState<number | null>(totalPages);
   const [scale, setScale] = useState(1);
@@ -76,8 +83,15 @@ export function PdfViewer({
   const [pending, setPending] = useState<PendingSelection | null>(null);
   const [pageInput, setPageInput] = useState(String(currentPage));
   const [syncedPage, setSyncedPage] = useState(currentPage);
+  const focusMode = useFocusMode();
 
   const pageContainerRef = useRef<HTMLDivElement>(null);
+
+  // Focus mode is scoped to this page being mounted — leaving the article (even via
+  // client-side navigation) must restore the sidebar rather than leaving it hidden globally.
+  useEffect(() => {
+    return () => setFocusMode(false);
+  }, []);
 
   if (syncedPage !== currentPage) {
     setSyncedPage(currentPage);
@@ -160,15 +174,23 @@ export function PdfViewer({
       // contentEditable divs, not <textarea>, so arrow keys there must move the cursor,
       // not the PDF page.
       if (['INPUT', 'TEXTAREA'].includes(target.tagName) || target.isContentEditable) return;
-      if (e.key === 'ArrowRight' || e.key === 'PageDown') goToPage(currentPage + 1);
-      if (e.key === 'ArrowLeft' || e.key === 'PageUp') goToPage(currentPage - 1);
+      if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === 'PageDown') goToPage(currentPage + 1);
+      if (e.key === 'ArrowLeft' || e.key === 'ArrowUp' || e.key === 'PageUp') goToPage(currentPage - 1);
       if (e.key === 'Home') goToPage(1);
       if (e.key === 'End' && numPages) goToPage(numPages);
+      if (e.key === 'Enter' && pending) {
+        e.preventDefault();
+        onQuickSave({ page: pending.page, excerptText: pending.excerptText, positionData: pending.positionData, color: QUICK_SAVE_COLOR });
+        clearSelection();
+      }
+      if (e.key.toLowerCase() === 'f' && !e.metaKey && !e.ctrlKey && !e.altKey) {
+        setFocusMode(!focusMode);
+      }
     }
     window.addEventListener('keydown', handleKeydown);
     return () => window.removeEventListener('keydown', handleKeydown);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentPage, numPages]);
+  }, [currentPage, numPages, pending, focusMode]);
 
   const pageHighlights = useMemo(() => highlights.filter((h) => h.page === currentPage), [highlights, currentPage]);
 
@@ -242,6 +264,18 @@ export function PdfViewer({
         </button>
 
         <div className="mx-1 h-5 w-px bg-neutral-200 dark:bg-neutral-800" />
+
+        <button
+          type="button"
+          onClick={() => setFocusMode(!focusMode)}
+          className={cn(
+            'rounded-md p-1.5 hover:bg-neutral-100 dark:hover:bg-neutral-800',
+            focusMode ? 'text-accent' : 'text-neutral-500'
+          )}
+          title="Modo foco — esconde a barra lateral (F)"
+        >
+          {focusMode ? <PanelLeftOpen className="h-4 w-4" /> : <PanelLeftClose className="h-4 w-4" />}
+        </button>
 
         <button
           type="button"

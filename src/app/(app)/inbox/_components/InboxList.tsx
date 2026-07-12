@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { FileText, Clock, Loader2, CheckCircle2, AlertCircle } from 'lucide-react';
 import { Card } from '@/components/ui/Card';
-import { CompletenessBadge } from './CompletenessBadge';
+import { CompletenessBadge } from '@/components/ui/CompletenessBadge';
 import { InboxItemDialog, type InboxItemDialogData } from './InboxItemDialog';
 
 export interface InboxArticleItem {

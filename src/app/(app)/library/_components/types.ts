@@ -1,6 +1,7 @@
 export interface LibraryArticleItem {
   id: string;
   title: string;
+  completenessScore: number;
   authors: string[];
   year: number | null;
   journal: string | null;

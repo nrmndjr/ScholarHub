@@ -2,19 +2,39 @@ import Link from 'next/link';
 import { Highlighter, MessageSquare, Clock } from 'lucide-react';
 import { Card } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
+import { CompletenessBadge } from '@/components/ui/CompletenessBadge';
 import { StatusBadge } from './StatusBadge';
 import { FavoriteButton } from './FavoriteButton';
 import { DeleteArticleButton } from './DeleteArticleButton';
 import type { LibraryArticleItem } from './types';
 
-export function LibraryCardView({ items }: { items: LibraryArticleItem[] }) {
+export function LibraryCardView({
+  items,
+  selectedIds,
+  onToggleSelect,
+}: {
+  items: LibraryArticleItem[];
+  selectedIds: Set<string>;
+  onToggleSelect: (id: string) => void;
+}) {
   return (
     <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
       {items.map((item) => (
         <Link key={item.id} href={`/article/${item.id}`}>
           <Card className="flex h-full flex-col gap-3 p-4 transition-colors hover:border-neutral-300 dark:hover:border-neutral-700">
             <div className="flex items-start justify-between gap-2">
-              <StatusBadge articleId={item.id} status={item.status} />
+              <div className="flex flex-wrap items-center gap-1.5">
+                <input
+                  type="checkbox"
+                  checked={selectedIds.has(item.id)}
+                  onClick={(e) => e.stopPropagation()}
+                  onChange={() => onToggleSelect(item.id)}
+                  className="mr-0.5 h-3.5 w-3.5 shrink-0"
+                  aria-label={`Selecionar "${item.title}"`}
+                />
+                <StatusBadge articleId={item.id} status={item.status} />
+                {item.completenessScore < 100 && <CompletenessBadge score={item.completenessScore} />}
+              </div>
               <div className="flex items-center gap-0.5">
                 <FavoriteButton articleId={item.id} favorite={item.favorite} />
                 <DeleteArticleButton articleId={item.id} title={item.title} />

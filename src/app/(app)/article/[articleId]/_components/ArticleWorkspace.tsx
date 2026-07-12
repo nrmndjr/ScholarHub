@@ -83,6 +83,28 @@ export function ArticleWorkspace({
     setPendingHighlight({ ...data, color: 'COMENTARIO' });
   }
 
+  async function handleQuickSave(data: {
+    page: number;
+    excerptText: string;
+    positionData: HighlightPositionData;
+    color: HighlightColor;
+  }) {
+    try {
+      await createHighlightAction({
+        articleId: article.id,
+        page: data.page,
+        excerptText: data.excerptText,
+        positionData: data.positionData,
+        color: data.color,
+        tagIds: [],
+      });
+      router.refresh();
+      toast.success('Destaque salvo');
+    } catch {
+      toast.error('Erro ao salvar destaque');
+    }
+  }
+
   async function submitPendingHighlight({ tagIds, commentText }: { tagIds: string[]; commentText: string }) {
     if (!pendingHighlight) return;
     try {
@@ -130,6 +152,7 @@ export function ArticleWorkspace({
             pageTexts={pageTexts}
             onSelectionColor={handleSelectionColor}
             onSelectionComment={handleSelectionComment}
+            onQuickSave={handleQuickSave}
           />
         </div>
 

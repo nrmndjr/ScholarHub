@@ -14,6 +14,7 @@ import {
   BookMarked,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useFocusMode } from '@/lib/focus-mode';
 
 const NAV_ITEMS = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -27,6 +28,9 @@ const NAV_ITEMS = [
 
 export function Sidebar() {
   const pathname = usePathname();
+  const focusMode = useFocusMode();
+
+  if (focusMode) return null;
 
   return (
     <aside className="flex w-60 shrink-0 flex-col border-r border-neutral-200 bg-white dark:border-neutral-800 dark:bg-neutral-950">
