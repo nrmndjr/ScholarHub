@@ -41,6 +41,8 @@ model User {
   writingDocuments WritingDocument[]
   writingBlocks    WritingBlock[]
   savedFilters     SavedFilter[]
+  goals            Goal[]
+  achievements     UserAchievement[]
 }
 
 model Account {
@@ -456,4 +458,37 @@ model SavedFilter {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
+}
+
+// ---------- Engajamento (reading habits, personal goals, achievements) ----------
+
+model Goal {
+  id        String    @id @default(cuid())
+  userId    String
+  type      String // ARTICLES | PAGES | TIME | HIGHLIGHTS | WRITING
+  metric    String // ARTICLES_COMPLETED | PAGES_READ | TIME_MINUTES | HIGHLIGHTS_CREATED | WRITING_CITATIONS | WRITING_DOCUMENTS
+  frequency String // DAILY | WEEKLY | MONTHLY
+  target    Int
+  active    Boolean   @default(true)
+  pausedAt  DateTime?
+  startDate DateTime  @default(now())
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, active])
+}
+
+// One row per badge the user has unlocked — badge definitions themselves live in
+// code (modules/engagement/domain/entities.ts), not the database.
+model UserAchievement {
+  id         String   @id @default(cuid())
+  userId     String
+  badgeKey   String
+  unlockedAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, badgeKey])
 }

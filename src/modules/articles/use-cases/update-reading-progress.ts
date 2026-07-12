@@ -10,8 +10,6 @@ export async function updateReadingProgress(
   const article = await deps.prisma.article.findFirst({ where: { id: articleId, userId } });
   if (!article) throw new NotFoundError('Artigo não encontrado');
 
-  const isFirstOpen = !article.lastOpenedAt;
-
   await deps.prisma.article.update({
     where: { id: articleId },
     data: {
@@ -22,7 +20,13 @@ export async function updateReadingProgress(
     },
   });
 
-  if (isFirstOpen) {
+  // A session stays open (no endedAt) until the reader unmounts (see closeOpenReadingSession),
+  // so re-open a new one per *visit* rather than once per article's lifetime — otherwise
+  // reopening an article on a later day never gets its own session, breaking streaks/analytics.
+  const openSession = await deps.prisma.readingSession.findFirst({
+    where: { articleId, userId, endedAt: null },
+  });
+  if (!openSession) {
     await deps.prisma.readingSession.create({
       data: { userId, articleId, startPage: input.currentPage },
     });

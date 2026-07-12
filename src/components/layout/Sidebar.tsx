@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
   LayoutDashboard,
+  Flame,
   Inbox,
   Library,
   FolderKanban,
@@ -18,6 +19,7 @@ import { useFocusMode } from '@/lib/focus-mode';
 
 const NAV_ITEMS = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+  { href: '/engagement', label: 'Engajamento', icon: Flame },
   { href: '/inbox', label: 'Inbox', icon: Inbox },
   { href: '/library', label: 'Biblioteca', icon: Library },
   { href: '/projects', label: 'Projetos', icon: FolderKanban },
